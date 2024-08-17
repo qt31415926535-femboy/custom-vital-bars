@@ -27,17 +27,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.neur0tox1n_.customvitalbars;
+package net.runelite.client.plugins.customvitalbars;
 
 import javax.inject.Inject;
 import com.google.inject.Provides;
 import lombok.AccessLevel;
 import lombok.Getter;
 import net.runelite.api.*;
-import net.runelite.api.events.GameStateChanged;
-import net.runelite.api.events.GameTick;
-import net.runelite.api.events.ItemContainerChanged;
-import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.*;
+import net.runelite.api.widgets.InterfaceID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -142,6 +140,52 @@ public class CustomVitalBarsPlugin extends Plugin
 	{
 		if (CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("hideAfterCombatDelay")) {
 			clientThread.invokeLater(this::checkCustomVitalBars);
+		}
+	}
+
+	@Subscribe
+	public void onWidgetLoaded( WidgetLoaded widgetLoaded )
+	{
+		if (    widgetLoaded.getGroupId() == InterfaceID.BANK ||
+				widgetLoaded.getGroupId() == InterfaceID.BANK_INVENTORY ||
+				widgetLoaded.getGroupId() == InterfaceID.BANK_PIN ||
+				widgetLoaded.getGroupId() == InterfaceID.ACHIEVEMENT_DIARY ||
+				widgetLoaded.getGroupId() == InterfaceID.ACHIEVEMENT_DIARY_SCROLL||
+				widgetLoaded.getGroupId() == InterfaceID.ADVENTURE_LOG ||
+				widgetLoaded.getGroupId() == InterfaceID.BARROWS_PUZZLE ||
+				widgetLoaded.getGroupId() == InterfaceID.CHAMBERS_OF_XERIC_STORAGE_UNIT_PRIVATE ||
+				widgetLoaded.getGroupId() == InterfaceID.CHAMBERS_OF_XERIC_STORAGE_UNIT_SHARED ||
+				widgetLoaded.getGroupId() == InterfaceID.GROUP_STORAGE ||
+				widgetLoaded.getGroupId() == InterfaceID.GROUP_STORAGE_INVENTORY ||
+				widgetLoaded.getGroupId() == InterfaceID.DEPOSIT_BOX )
+		{
+			healthOverlay.onWidgetLoaded(widgetLoaded);
+			prayerOverlay.onWidgetLoaded(widgetLoaded);
+			energyOverlay.onWidgetLoaded(widgetLoaded);
+			specialOverlay.onWidgetLoaded(widgetLoaded);
+		}
+	}
+
+	@Subscribe
+	public void onWidgetClosed( WidgetClosed widgetClosed )
+	{
+		if (    widgetClosed.getGroupId() == InterfaceID.BANK ||
+				widgetClosed.getGroupId() == InterfaceID.BANK_INVENTORY ||
+				widgetClosed.getGroupId() == InterfaceID.BANK_PIN ||
+				widgetClosed.getGroupId() == InterfaceID.ACHIEVEMENT_DIARY ||
+				widgetClosed.getGroupId() == InterfaceID.ACHIEVEMENT_DIARY_SCROLL||
+				widgetClosed.getGroupId() == InterfaceID.ADVENTURE_LOG ||
+				widgetClosed.getGroupId() == InterfaceID.BARROWS_PUZZLE ||
+				widgetClosed.getGroupId() == InterfaceID.CHAMBERS_OF_XERIC_STORAGE_UNIT_PRIVATE ||
+				widgetClosed.getGroupId() == InterfaceID.CHAMBERS_OF_XERIC_STORAGE_UNIT_SHARED ||
+				widgetClosed.getGroupId() == InterfaceID.GROUP_STORAGE ||
+				widgetClosed.getGroupId() == InterfaceID.GROUP_STORAGE_INVENTORY ||
+				widgetClosed.getGroupId() == InterfaceID.DEPOSIT_BOX )
+		{
+			healthOverlay.onWidgetClosed(widgetClosed);
+			prayerOverlay.onWidgetClosed(widgetClosed);
+			energyOverlay.onWidgetClosed(widgetClosed);
+			specialOverlay.onWidgetClosed(widgetClosed);
 		}
 	}
 

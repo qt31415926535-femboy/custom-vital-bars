@@ -25,7 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.neur0tox1n_.customvitalbars;
+package net.runelite.client.plugins.customvitalbars;
 
 import java.awt.*;
 import javax.inject.Inject;
@@ -33,6 +33,8 @@ import javax.inject.Inject;
 import net.runelite.api.*;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.WidgetClosed;
+import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
@@ -40,7 +42,6 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.itemstats.Effect;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 import net.runelite.client.plugins.itemstats.StatChange;
-import com.neur0tox1n_.customvitalbars.PrayerType;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -61,6 +62,8 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
     private final ItemStatChangesService itemStatService;
 
     private CustomVitalBarsComponent barRenderer;
+
+    private boolean uiElementsOpen = false;
     private int prayerBonus;
 
     private double elapsedPrayerTime;
@@ -79,7 +82,7 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
 
         //setPriority(OverlayPriority.LOW);
         setPosition(OverlayPosition.DYNAMIC);
-        setLayer(OverlayLayer.ABOVE_WIDGETS);
+        setLayer(OverlayLayer.UNDER_WIDGETS);
         setMovable(true);
         setResizable( false );
         setSnappable( true );
@@ -132,7 +135,7 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
     @Override
     public Dimension render( Graphics2D g )
     {
-        if ( plugin.isBarsDisplayed() && config.renderPrayer() )
+        if ( plugin.isBarsDisplayed() && config.renderPrayer() && !uiElementsOpen )
         {
             barRenderer.renderBar( config, g, panelComponent, config.prayerFullnessDirection(), config.prayerLabelStyle(), config.prayerLabelPosition(), config.prayerGlowThresholdMode(), config.prayerGlowThresholdValue(), config.prayerSize().width, config.prayerSize().height );
 
@@ -201,6 +204,18 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
         {
             elapsedPrayerTime = 0;
         }
+    }
+
+    @Subscribe
+    public void onWidgetLoaded( WidgetLoaded widgetLoaded )
+    {
+        uiElementsOpen = true;
+    }
+
+    @Subscribe
+    public void onWidgetClosed( WidgetClosed widgetClosed )
+    {
+        uiElementsOpen = false;
     }
 
     private boolean isAnyPrayerActive()

@@ -1,4 +1,4 @@
-package com.neur0tox1n_.customvitalbars;
+package net.runelite.client.plugins.customvitalbars;
 
 import net.runelite.client.config.*;
 import net.runelite.client.ui.overlay.components.ComponentConstants;
@@ -296,18 +296,6 @@ public interface CustomVitalBarsConfig extends Config
 
 	@ConfigItem(
 			position = 30,
-			keyName = "specialLabelPosition",
-			name = "Special Label Position",
-			description = "Choose the location of the Special bar's label",
-			section = specialSettingsSection
-	)
-	default LabelPlacement specialLabelPosition()
-	{
-		return LabelPlacement.TOP;
-	}
-
-	@ConfigItem(
-			position = 31,
 			keyName = "specialGlowThresholdMode",
 			name = "Special Bar Glow Threshold Mode",
 			description = "Choose how to determine the critical threshold at which to glow the Special bar",
@@ -319,13 +307,26 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 32,
+			position = 31,
 			keyName = "specialGlowThresholdValue",
 			name = "Special Bar Glow Threshold Value",
 			description = "Choose what value of the chosen mode to start glowing the Special bar",
 			section = specialSettingsSection
 	)
 	default int specialGlowThresholdValue() { return 0; }
+
+
+	@ConfigItem(
+			position = 32,
+			keyName = "specialLabelPosition",
+			name = "Special Label Position",
+			description = "Choose the location of the Special bar's label",
+			section = specialSettingsSection
+	)
+	default LabelPlacement specialLabelPosition()
+	{
+		return LabelPlacement.TOP;
+	}
 
 	@ConfigItem(
 			position = 33,

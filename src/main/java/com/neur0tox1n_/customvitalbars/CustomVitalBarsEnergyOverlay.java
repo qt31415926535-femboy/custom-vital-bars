@@ -1,4 +1,4 @@
-package com.neur0tox1n_.customvitalbars;
+package net.runelite.client.plugins.customvitalbars;
 
 import java.awt.*;
 import java.time.Duration;
@@ -8,11 +8,16 @@ import javax.inject.Inject;
 
 import net.runelite.api.*;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.WidgetClosed;
+import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.ComponentID;
+import net.runelite.api.widgets.InterfaceID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.itemstats.Effect;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 import net.runelite.client.plugins.itemstats.StatChange;
+import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -35,6 +40,8 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel{
 
     private CustomVitalBarsComponent barRenderer;
 
+    private boolean uiElementsOpen = false;
+
     private double staminaDuration;
 
     @Inject
@@ -48,7 +55,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel{
 
         //setPriority(OverlayPriority.LOW);
         setPosition(OverlayPosition.DYNAMIC);
-        setLayer(OverlayLayer.ABOVE_WIDGETS);
+        setLayer(OverlayLayer.UNDER_WIDGETS);
         setMovable(true);
         setResizable( false );
         setSnappable( true );
@@ -85,7 +92,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel{
     @Override
     public Dimension render( Graphics2D g )
     {
-        if ( plugin.isBarsDisplayed() && config.renderEnergy() )
+        if ( plugin.isBarsDisplayed() && config.renderEnergy() && !uiElementsOpen )
         {
             barRenderer.renderBar( config, g, panelComponent, config.energyFullnessDirection(), config.energyLabelStyle(), config.energyLabelPosition(), config.energyGlowThresholdMode(), config.energyGlowThresholdValue(), config.energySize().width, config.energySize().height );
 
@@ -148,6 +155,18 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel{
         }
     }
 
+    @Subscribe
+    public void onWidgetLoaded( WidgetLoaded widgetLoaded )
+    {
+        uiElementsOpen = true;
+    }
+
+    @Subscribe
+    public void onWidgetClosed( WidgetClosed widgetClosed )
+    {
+        uiElementsOpen = false;
+    }
+
     private void updateStaminaTimer( final int varValue, final IntUnaryOperator tickDuration )
     {
         updateStaminaTimer( varValue, i -> i == 0, tickDuration );
@@ -159,6 +178,4 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel{
         final Duration duration = Duration.of(ticks, RSTimeUnit.GAME_TICKS);
         staminaDuration = duration.getSeconds();
     }
-
-
 }

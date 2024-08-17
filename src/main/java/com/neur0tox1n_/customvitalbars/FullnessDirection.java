@@ -1,4 +1,4 @@
-package com.neur0tox1n_.customvitalbars;
+package net.runelite.client.plugins.customvitalbars;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

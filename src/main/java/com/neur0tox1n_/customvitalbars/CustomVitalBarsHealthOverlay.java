@@ -1,14 +1,13 @@
-package com.neur0tox1n_.customvitalbars;
+package net.runelite.client.plugins.customvitalbars;
 
 import java.awt.*;
 import javax.inject.Inject;
 
 import lombok.Getter;
 import net.runelite.api.*;
-import net.runelite.api.events.GameStateChanged;
-import net.runelite.api.events.GameTick;
-import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.*;
 import net.runelite.api.widgets.ComponentID;
+import net.runelite.api.widgets.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.itemstats.Effect;
@@ -37,6 +36,8 @@ public class CustomVitalBarsHealthOverlay extends OverlayPanel{
 
     private CustomVitalBarsComponent barRenderer;
 
+    private boolean uiElementsOpen = false;
+
     private static final int NORMAL_HP_REGEN_TICKS = 100;
 
     @Getter
@@ -54,7 +55,8 @@ public class CustomVitalBarsHealthOverlay extends OverlayPanel{
 
         //setPriority(OverlayPriority.LOW);
         setPosition(OverlayPosition.DYNAMIC);
-        setLayer(OverlayLayer.ABOVE_WIDGETS);
+        setLayer(OverlayLayer.UNDER_WIDGETS);
+
         setMovable(true);
         setResizable( false );
         setSnappable( true );
@@ -106,7 +108,7 @@ public class CustomVitalBarsHealthOverlay extends OverlayPanel{
     @Override
     public Dimension render( Graphics2D g )
     {
-        if ( plugin.isBarsDisplayed() && config.renderHealth() )
+        if ( plugin.isBarsDisplayed() && config.renderHealth() && !uiElementsOpen )
         {
             barRenderer.renderBar( config, g, panelComponent, config.healthFullnessDirection(), config.healthLabelStyle(), config.healthLabelPosition(), config.healthGlowThresholdMode(), config.healthGlowThresholdValue(), config.healthSize().width, config.healthSize().height );
             return config.healthSize();
@@ -195,5 +197,17 @@ public class CustomVitalBarsHealthOverlay extends OverlayPanel{
             // Show it going down
             hitpointsPercentage = 1 - hitpointsPercentage;
         }
+    }
+
+    @Subscribe
+    public void onWidgetLoaded( WidgetLoaded widgetLoaded )
+    {
+        uiElementsOpen = true;
+    }
+
+    @Subscribe
+    public void onWidgetClosed( WidgetClosed widgetClosed )
+    {
+        uiElementsOpen = false;
     }
 }

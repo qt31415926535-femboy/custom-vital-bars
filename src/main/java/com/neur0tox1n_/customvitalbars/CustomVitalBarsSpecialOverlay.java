@@ -1,13 +1,11 @@
-package com.neur0tox1n_.customvitalbars;
+package net.runelite.client.plugins.customvitalbars;
 
 import java.awt.*;
 import javax.inject.Inject;
 
 import lombok.Getter;
 import net.runelite.api.*;
-import net.runelite.api.events.GameStateChanged;
-import net.runelite.api.events.GameTick;
-import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.*;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 import net.runelite.client.ui.overlay.OverlayPanel;
@@ -29,6 +27,8 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
 
     private CustomVitalBarsComponent barRenderer;
 
+    private boolean uiElementsOpen = false;
+
     private static final int SPEC_REGEN_TICKS = 50;
     @Getter
     private double specialPercentage;
@@ -47,7 +47,7 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
 
         //setPriority(OverlayPriority.LOW);
         setPosition(OverlayPosition.DYNAMIC);
-        setLayer(OverlayLayer.ABOVE_WIDGETS);
+        setLayer(OverlayLayer.UNDER_WIDGETS);
         setMovable(true);
         setResizable( false );
         setSnappable( true );
@@ -74,7 +74,7 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
     @Override
     public Dimension render( Graphics2D g )
     {
-        if ( plugin.isBarsDisplayed() && config.renderSpecial() )
+        if ( plugin.isBarsDisplayed() && config.renderSpecial() && !uiElementsOpen )
         {
             barRenderer.renderBar( config, g, panelComponent, config.specialFullnessDirection(), config.specialLabelStyle(), config.specialLabelPosition(), config.specialGlowThresholdMode(), config.specialGlowThresholdValue(), config.specialSize().width, config.specialSize().height );
 
@@ -126,5 +126,17 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
             ticksSinceSpecRegen = (ticksSinceSpecRegen + 1) % ticksPerSpecRegen;
         }
         specialPercentage = ticksSinceSpecRegen / (double) ticksPerSpecRegen;
+    }
+
+    @Subscribe
+    public void onWidgetLoaded( WidgetLoaded widgetLoaded )
+    {
+        uiElementsOpen = true;
+    }
+
+    @Subscribe
+    public void onWidgetClosed( WidgetClosed widgetClosed )
+    {
+        uiElementsOpen = false;
     }
 }
