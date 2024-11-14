@@ -39,13 +39,13 @@ import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.game.ItemStats;
 import net.runelite.client.plugins.itemstats.Effect;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 import net.runelite.client.plugins.itemstats.StatChange;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
-import net.runelite.http.api.item.ItemStats;
 
 public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
 
@@ -236,7 +236,8 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
         int total = 0;
         for (Item item : items)
         {
-            ItemStats is = itemManager.getItemStats(item.getId(), false);
+            //ItemStats is = itemManager.getItemStats(item.getId(), false);
+            ItemStats is = itemManager.getItemStats(item.getId());
             if (is != null && is.getEquipment() != null)
             {
                 total += is.getEquipment().getPrayer();
