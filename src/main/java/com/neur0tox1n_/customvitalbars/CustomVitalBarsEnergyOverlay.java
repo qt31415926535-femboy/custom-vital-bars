@@ -112,7 +112,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 
     private int ticksSinceRunEnergyRegen = 0;
 
-    private int nextHighestRunEnergyMark;
+    private int nextHighestRunEnergyMark = 0;
     private int ticksToRunEnergyRegen;
     private long millisecondsToRunEnergyRegen;
 
