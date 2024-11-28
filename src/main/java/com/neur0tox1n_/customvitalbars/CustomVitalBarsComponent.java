@@ -74,8 +74,68 @@ class CustomVitalBarsComponent
         currentValue = currentValueSupplier.get();
     }
 
-    void renderBar( CustomVitalBarsConfig config, Graphics2D graphics, PanelComponent component, FullnessDirection dir, LabelStyle labelStyle, LabelPlacement labelLoc, ThresholdGlowMode thresholdGlowMode, int thresholdGlowValue, int outlineThickness, int width, int height )
+    void renderBar( CustomVitalBarsConfig config, Graphics2D graphics, PanelComponent component, Vital whichVital )
     {
+        FullnessDirection dir = null;
+        LabelStyle labelStyle = null;
+        LabelPlacement labelLoc = null;
+        ThresholdGlowMode thresholdGlowMode = null;
+        OutlineProgressThreshold thresholdOutlineProgress = null;
+        int thresholdGlowValue = 0, outlineThickness = 0, width = 0, height = 0;
+
+        if ( whichVital == Vital.HITPOINTS )
+        {
+            dir = config.hitpointsFullnessDirection();
+            labelStyle = config.hitpointsLabelStyle();
+            labelLoc = config.hitpointsLabelPosition();
+            thresholdGlowMode = config.hitpointsGlowThresholdMode();
+            thresholdOutlineProgress = config.hitpointsOutlineProgressThreshold();
+
+            thresholdGlowValue = config.hitpointsGlowThresholdValue();
+            outlineThickness = config.hitpointsOutlineThickness();
+            width = config.hitpointsSize().width;
+            height = config.hitpointsSize().height;
+        }
+        else if ( whichVital == Vital.PRAYER )
+        {
+            dir = config.prayerFullnessDirection();
+            labelStyle = config.prayerLabelStyle();
+            labelLoc = config.prayerLabelPosition();
+            thresholdGlowMode = config.prayerGlowThresholdMode();
+            thresholdOutlineProgress = config.prayerOutlineProgressThreshold();
+
+            thresholdGlowValue = config.prayerGlowThresholdValue();
+            outlineThickness = config.prayerOutlineThickness();
+            width = config.prayerSize().width;
+            height = config.prayerSize().height;
+        }
+        else if ( whichVital == Vital.RUN_ENERGY )
+        {
+            dir = config.energyFullnessDirection();
+            labelStyle = config.energyLabelStyle();
+            labelLoc = config.energyLabelPosition();
+            thresholdGlowMode = config.energyGlowThresholdMode();
+            thresholdOutlineProgress = config.energyOutlineProgressThreshold();
+
+            thresholdGlowValue = config.energyGlowThresholdValue();
+            outlineThickness = config.energyOutlineThickness();
+            width = config.energySize().width;
+            height = config.energySize().height;
+        }
+        else if ( whichVital == Vital.SPECIAL_ENERGY )
+        {
+            dir = config.specialFullnessDirection();
+            labelStyle = config.specialLabelStyle();
+            labelLoc = config.specialLabelPosition();
+            thresholdGlowMode = config.specialGlowThresholdMode();
+            thresholdOutlineProgress = config.specialOutlineProgressThreshold();
+
+            thresholdGlowValue = config.specialGlowThresholdValue();
+            outlineThickness = config.specialOutlineThickness();
+            width = config.specialSize().width;
+            height = config.specialSize().height;
+        }
+
         if ( boundingBox == null )
         {
             boundingBox = new PanelComponent();
@@ -87,7 +147,7 @@ class CustomVitalBarsComponent
 
         if ( outlineThickness > 0 )
         {
-            renderOutline( config, graphics, component, dir, outlineThickness, width, height );
+            renderOutline( config, graphics, component, dir, outlineThickness, thresholdOutlineProgress, width, height );
         }
 
         // start by assuming the bar will be filled rightward
@@ -122,14 +182,28 @@ class CustomVitalBarsComponent
         graphics.fillRect(component.getBounds().x, component.getBounds().y, width, height );
 
         pulseColour = false;
-        if ( thresholdGlowMode == ThresholdGlowMode.PERCENTAGE )
+        if ( thresholdGlowMode == ThresholdGlowMode.ABOVE_PERCENTAGE )
+        {
+            if ( currentValue * 100d / maxValue > thresholdGlowValue )
+            {
+                pulseColour = true;
+            }
+        }
+        else if ( thresholdGlowMode == ThresholdGlowMode.ABOVE_FLAT_VALUE )
+        {
+            if ( currentValue > thresholdGlowValue )
+            {
+                pulseColour = true;
+            }
+        }
+        else if ( thresholdGlowMode == ThresholdGlowMode.BELOW_PERCENTAGE )
         {
             if ( currentValue * 100d / maxValue < thresholdGlowValue )
             {
                 pulseColour = true;
             }
         }
-        else if ( thresholdGlowMode == ThresholdGlowMode.FLAT_VALUE )
+        else if ( thresholdGlowMode == ThresholdGlowMode.BELOW_FLAT_VALUE )
         {
             if ( currentValue < thresholdGlowValue )
             {
@@ -170,10 +244,15 @@ class CustomVitalBarsComponent
         }
     }
 
-    private void renderOutline( CustomVitalBarsConfig config, Graphics2D graphics, PanelComponent component, FullnessDirection dir, int outlineSize, int width, int height )
+    private void renderOutline( CustomVitalBarsConfig config, Graphics2D graphics, PanelComponent component, FullnessDirection dir, int outlineSize, OutlineProgressThreshold thresholdOutlineProgress, int width, int height )
     {
         graphics.setColor( BACKGROUND );
         graphics.drawRect( component.getBounds().x - outlineSize - 1, component.getBounds().y - outlineSize - 1, width + 2 * outlineSize + BORDER_SIZE + 1, height + 2 * outlineSize + BORDER_SIZE + 1 );
+
+        if ( thresholdOutlineProgress == OutlineProgressThreshold.ALWAYS_OFF )
+        {
+            return;
+        }
 
         graphics.setColor( colorSupplier.get() );
         if ( dir == FullnessDirection.TOP )
@@ -262,6 +341,7 @@ class CustomVitalBarsComponent
         textComponent.setText( counterText );
         textComponent.setPosition( new Point(x + xOffset, y + yOffset) );
         textComponent.render( graphics );
+
     }
 
     private void renderRestore(CustomVitalBarsConfig config, Graphics2D graphics, FullnessDirection dir, int x, int y, int width, int height)

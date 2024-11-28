@@ -36,6 +36,10 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
     private int ticksSinceSpecRegen;
     private boolean wearingLightbearer;
 
+    private long millisecondsSinceSpecRegen;
+    private long deltaTime;
+    private long lastTime;
+
     @Inject
     CustomVitalBarsSpecialOverlay(
             Client client,
@@ -74,9 +78,26 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
     @Override
     public Dimension render( Graphics2D g )
     {
+        deltaTime = java.time.Instant.now().toEpochMilli() - lastTime;
+        lastTime = java.time.Instant.now().toEpochMilli();
+
+        if ( client.getVarpValue(VarPlayer.SPECIAL_ATTACK_PERCENT) == 1000 )
+        {
+            millisecondsSinceSpecRegen = 0;
+            specialPercentage = 0;
+        }
+        else
+        {
+            double millisecondsPerSpecRegen = wearingLightbearer ? SPEC_REGEN_TICKS / 2 : SPEC_REGEN_TICKS;
+            millisecondsPerSpecRegen *= 0.6d * 1000;
+
+            millisecondsSinceSpecRegen = (long)((millisecondsSinceSpecRegen + deltaTime) % millisecondsPerSpecRegen);
+            specialPercentage = millisecondsSinceSpecRegen / millisecondsPerSpecRegen;
+        }
+
         if ( plugin.isBarsDisplayed() && config.renderSpecial() && !uiElementsOpen )
         {
-            barRenderer.renderBar( config, g, panelComponent, config.specialFullnessDirection(), config.specialLabelStyle(), config.specialLabelPosition(), config.specialGlowThresholdMode(), config.specialGlowThresholdValue(), config.specialOutlineThickness(), config.specialSize().width, config.specialSize().height );
+            barRenderer.renderBar( config, g, panelComponent, Vital.SPECIAL_ENERGY );
 
             return config.specialSize();
         }
@@ -116,14 +137,15 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
     {
         final int ticksPerSpecRegen = wearingLightbearer ? SPEC_REGEN_TICKS / 2 : SPEC_REGEN_TICKS;
 
-        if (client.getVarpValue(VarPlayer.SPECIAL_ATTACK_PERCENT) == 1000)
+        if ( client.getVarpValue(VarPlayer.SPECIAL_ATTACK_PERCENT) < 1000 )
         {
-            // The recharge doesn't tick when at 100%
-            ticksSinceSpecRegen = 0;
+            ticksSinceSpecRegen = (ticksSinceSpecRegen + 1) % ticksPerSpecRegen;
+            millisecondsSinceSpecRegen = (long) (ticksSinceSpecRegen * 0.6 * 1000);
         }
         else
         {
-            ticksSinceSpecRegen = (ticksSinceSpecRegen + 1) % ticksPerSpecRegen;
+            ticksSinceSpecRegen = 0;
+            millisecondsSinceSpecRegen = 0;
         }
         specialPercentage = ticksSinceSpecRegen / (double) ticksPerSpecRegen;
     }

@@ -78,7 +78,7 @@ public interface CustomVitalBarsConfig extends Config
 	)
 	default ThresholdGlowMode hitpointsGlowThresholdMode()
 	{
-		return ThresholdGlowMode.PERCENTAGE;
+		return ThresholdGlowMode.BELOW_PERCENTAGE;
 	}
 
 	@ConfigItem(
@@ -102,9 +102,18 @@ public interface CustomVitalBarsConfig extends Config
 			max = 5
 	)
 	default int hitpointsOutlineThickness() { return 3; }
-	
+
 	@ConfigItem(
 			position = 10,
+			keyName = "hitpointsOutlineProgressThreshold",
+			name = "Hitpoints Bar Outline Progress Threshold",
+			description = "When to stop progress on the outline of the Hitpoints bar",
+			section = hitpointsSettingsSection
+	)
+	default OutlineProgressThreshold hitpointsOutlineProgressThreshold() { return OutlineProgressThreshold.RELATED_STAT_AT_MAX; }
+	
+	@ConfigItem(
+			position = 11,
 			keyName = "showPrayer",
 			name = "Show Prayer",
 			description = "Render Prayer overlay"
@@ -112,14 +121,14 @@ public interface CustomVitalBarsConfig extends Config
 	default boolean renderPrayer() { return false; }
 
 	@ConfigSection(
-			position = 11,
+			position = 12,
 			name = "Prayer Bar Settings",
 			description = "Prayer Bar Settings"
 	)
 	String prayerSettingsSection = "prayerSettings";
 
 	@ConfigItem(
-			position = 12,
+			position = 13,
 			keyName = "prayerSize",
 			name = "Prayer Bar Size",
 			description = "Choose the size of the Prayer bar",
@@ -128,7 +137,7 @@ public interface CustomVitalBarsConfig extends Config
 	default Dimension prayerSize() { return new Dimension(ComponentConstants.STANDARD_WIDTH, 15 ); }
 
 	@ConfigItem(
-			position = 13,
+			position = 14,
 			keyName = "prayerFullnessDirection",
 			name = "Prayer Fullness Direction",
 			description = "Choose the direction of fullness of the Prayer bar",
@@ -137,7 +146,7 @@ public interface CustomVitalBarsConfig extends Config
 	default FullnessDirection prayerFullnessDirection() { return FullnessDirection.RIGHT; }
 
 	@ConfigItem(
-			position = 14,
+			position = 15,
 			keyName = "prayerLabelStyle",
 			name = "Prayer Label Style",
 			description = "Choose the style of the Prayer bar's label",
@@ -149,7 +158,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 15,
+			position = 16,
 			keyName = "prayerLabelPosition",
 			name = "Prayer Label Position",
 			description = "Choose the location of the Prayer bar's label",
@@ -161,7 +170,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 16,
+			position = 17,
 			keyName = "prayerGlowThresholdMode",
 			name = "Prayer Bar Glow Threshold Mode",
 			description = "Choose how to determine the critical threshold at which to glow the Prayer bar",
@@ -169,11 +178,11 @@ public interface CustomVitalBarsConfig extends Config
 	)
 	default ThresholdGlowMode prayerGlowThresholdMode()
 	{
-		return ThresholdGlowMode.PERCENTAGE;
+		return ThresholdGlowMode.BELOW_PERCENTAGE;
 	}
 
 	@ConfigItem(
-			position = 17,
+			position = 18,
 			keyName = "prayerGlowThresholdValue",
 			name = "Prayer Bar Glow Threshold Value",
 			description = "Choose what value of the chosen mode to start glowing the Prayer bar",
@@ -182,10 +191,10 @@ public interface CustomVitalBarsConfig extends Config
 	default int prayerGlowThresholdValue() { return 10; }
 
 	@ConfigItem(
-			position = 18,
+			position = 19,
 			keyName = "prayerOutlineThickness",
 			name = "Prayer Bar Outline Effects Thickness",
-			description = "How thick to draw an outline around the Prayer bars to show Prayer point consumption progress.",
+			description = "How thick to draw an outline around the Prayer bars to show Prayer point consumption progress or Prayer Regeneration Potion regeneration.",
 			section = prayerSettingsSection
 	)
 	@Range(
@@ -195,7 +204,16 @@ public interface CustomVitalBarsConfig extends Config
 	default int prayerOutlineThickness() { return 3; }
 
 	@ConfigItem(
-			position = 19,
+			position = 20,
+			keyName = "prayerOutlineProgressThreshold",
+			name = "Prayer Bar Outline Progress Threshold",
+			description = "When to stop progress on the outline of the Prayer bar",
+			section = prayerSettingsSection
+	)
+	default OutlineProgressThreshold prayerOutlineProgressThreshold() { return OutlineProgressThreshold.RELATED_STAT_AT_MAX; }
+
+	@ConfigItem(
+			position = 21,
 			keyName = "showEnergy",
 			name = "Show Energy",
 			description = "Render Run Energy overlay"
@@ -203,14 +221,14 @@ public interface CustomVitalBarsConfig extends Config
 	default boolean renderEnergy() { return false; }
 
 	@ConfigSection(
-			position = 20,
+			position = 22,
 			name = "Energy Bar Settings",
 			description = "Energy Bar Settings"
 	)
 	String energySettingsSection = "energySettings";
 
 	@ConfigItem(
-			position = 21,
+			position = 23,
 			keyName = "energySize",
 			name = "Energy Bar Size",
 			description = "Choose the size of the Energy bar",
@@ -219,7 +237,7 @@ public interface CustomVitalBarsConfig extends Config
 	default Dimension energySize() { return new Dimension(ComponentConstants.STANDARD_WIDTH, 15 ); }
 
 	@ConfigItem(
-			position = 22,
+			position = 24,
 			keyName = "energyFullnessDirection",
 			name = "Energy Fullness Direction",
 			description = "Choose the direction of fullness of the Energy bar",
@@ -228,7 +246,7 @@ public interface CustomVitalBarsConfig extends Config
 	default FullnessDirection energyFullnessDirection() { return FullnessDirection.RIGHT; }
 
 	@ConfigItem(
-			position = 23,
+			position = 25,
 			keyName = "energyLabelStyle",
 			name = "Energy Label Style",
 			description = "Choose the style of the Energy bar's label",
@@ -240,7 +258,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 24,
+			position = 26,
 			keyName = "energyLabelPosition",
 			name = "Energy Label Position",
 			description = "Choose the location of the Energy bar's label",
@@ -252,7 +270,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 25,
+			position = 27,
 			keyName = "energyGlowThresholdMode",
 			name = "Energy Bar Glow Threshold Mode",
 			description = "Choose how to determine the critical threshold at which to glow the Energy bar",
@@ -260,11 +278,11 @@ public interface CustomVitalBarsConfig extends Config
 	)
 	default ThresholdGlowMode energyGlowThresholdMode()
 	{
-		return ThresholdGlowMode.PERCENTAGE;
+		return ThresholdGlowMode.BELOW_PERCENTAGE;
 	}
 
 	@ConfigItem(
-			position = 26,
+			position = 28,
 			keyName = "energyGlowThresholdValue",
 			name = "Energy Bar Glow Threshold Value",
 			description = "Choose what value of the chosen mode to start glowing the Energy bar",
@@ -273,11 +291,10 @@ public interface CustomVitalBarsConfig extends Config
 	default int energyGlowThresholdValue() { return 10; }
 
 	@ConfigItem(
-			position = 27,
+			position = 29,
 			keyName = "energyOutlineThickness",
 			name = "Energy Bar Outline Effects Thickness",
-			//description = "How thick to draw an outline around the Energy bar to show regeneration or stamina potion duration."
-			description = "How thick to draw an outline around the Energy bar to show stamina potion duration.",
+			description = "How thick to draw an outline around the Energy bar to show regeneration or Stamina Potion duration.",
 			section = energySettingsSection
 	)
 	@Range(
@@ -287,7 +304,16 @@ public interface CustomVitalBarsConfig extends Config
 	default int energyOutlineThickness() { return 3; }
 
 	@ConfigItem(
-			position = 28,
+			position = 30,
+			keyName = "energyOutlineProgressThreshold",
+			name = "Energy Bar Outline Progress Threshold",
+			description = "When to stop progress on the outline of the Energy bar",
+			section = energySettingsSection
+	)
+	default OutlineProgressThreshold energyOutlineProgressThreshold() { return OutlineProgressThreshold.RELATED_STAT_AT_MAX; }
+
+	@ConfigItem(
+			position = 31,
 			keyName = "showSpecial",
 			name = "Show Special",
 			description = "Render Special Attack overlay"
@@ -295,14 +321,14 @@ public interface CustomVitalBarsConfig extends Config
 	default boolean renderSpecial() { return false; }
 
 	@ConfigSection(
-			position = 29,
+			position = 32,
 			name = "Special Bar Settings",
 			description = "Special Bar Settings"
 	)
 	String specialSettingsSection = "specialSettings";
 
 	@ConfigItem(
-			position = 30,
+			position = 33,
 			keyName = "specialSize",
 			name = "Special Bar Size",
 			description = "Choose the size of the Special bar",
@@ -311,7 +337,7 @@ public interface CustomVitalBarsConfig extends Config
 	default Dimension specialSize() { return new Dimension(ComponentConstants.STANDARD_WIDTH, 15 ); }
 
 	@ConfigItem(
-			position = 31,
+			position = 34,
 			keyName = "specialFullnessDirection",
 			name = "Special Fullness Direction",
 			description = "Choose the direction of fullness of the Special bar",
@@ -320,7 +346,7 @@ public interface CustomVitalBarsConfig extends Config
 	default FullnessDirection specialFullnessDirection() { return FullnessDirection.RIGHT; }
 
 	@ConfigItem(
-			position = 32,
+			position = 35,
 			keyName = "specialLabelStyle",
 			name = "Special Label Style",
 			description = "Choose the style of the Special bar's label",
@@ -332,7 +358,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 33,
+			position = 36,
 			keyName = "specialLabelPosition",
 			name = "Special Label Position",
 			description = "Choose the location of the Special bar's label",
@@ -344,7 +370,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 34,
+			position = 37,
 			keyName = "specialGlowThresholdMode",
 			name = "Special Bar Glow Threshold Mode",
 			description = "Choose how to determine the critical threshold at which to glow the Special bar",
@@ -352,11 +378,11 @@ public interface CustomVitalBarsConfig extends Config
 	)
 	default ThresholdGlowMode specialGlowThresholdMode()
 	{
-		return ThresholdGlowMode.PERCENTAGE;
+		return ThresholdGlowMode.ABOVE_PERCENTAGE;
 	}
 
 	@ConfigItem(
-			position = 35,
+			position = 38,
 			keyName = "specialGlowThresholdValue",
 			name = "Special Bar Glow Threshold Value",
 			description = "Choose what value of the chosen mode to start glowing the Special bar",
@@ -365,7 +391,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int specialGlowThresholdValue() { return 10; }
 
 	@ConfigItem(
-			position = 36,
+			position = 39,
 			keyName = "specialOutlineThickness",
 			name = "Special Bar Outline Effects Thickness",
 			description = "How thick to draw an outline around the Special bar to show regeneration.",
@@ -378,7 +404,16 @@ public interface CustomVitalBarsConfig extends Config
 	default int specialOutlineThickness() { return 3; }
 
 	@ConfigItem(
-			position = 37,
+			position = 40,
+			keyName = "specialOutlineProgressThreshold",
+			name = "Special Bar Outline Progress Threshold",
+			description = "When to stop progress on the outline of the Special bar",
+			section = specialSettingsSection
+	)
+	default OutlineProgressThreshold specialOutlineProgressThreshold() { return OutlineProgressThreshold.RELATED_STAT_AT_MAX; }
+
+	@ConfigItem(
+			position = 41,
 			keyName = "enableRestorationBars",
 			name = "Show Restores",
 			description = "Visually shows how much will be restored to your bars."
@@ -386,7 +421,7 @@ public interface CustomVitalBarsConfig extends Config
 	default boolean enableRestorationBars() { return true; }
 
 	@ConfigItem(
-			position = 38,
+			position = 42,
 			keyName = "hideAfterCombatDelay",
 			name = "Hide after combat delay",
 			description = "Amount of ticks before hiding status bars after no longer in combat. 0 = always show status bars."

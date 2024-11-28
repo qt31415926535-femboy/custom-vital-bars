@@ -43,6 +43,10 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
     private double hitpointsRegenerationPercentage;
     private int ticksSinceHPRegen;
 
+    private long millisecondsSinceHPRegen;
+    private long deltaTime;
+    private long lastTime;
+
     @Inject
     CustomVitalBarsHitpointsOverlay(
             Client client,
@@ -107,9 +111,33 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
     @Override
     public Dimension render( Graphics2D g )
     {
+        deltaTime = java.time.Instant.now().toEpochMilli() - lastTime;
+        lastTime = java.time.Instant.now().toEpochMilli();
+
+        long millisecondsPerHPRegen = (long)(NORMAL_HP_REGEN_TICKS * 0.6 * 1000);
+        if (client.isPrayerActive(Prayer.RAPID_HEAL))
+        {
+            millisecondsPerHPRegen /= 2;
+        }
+
+        millisecondsSinceHPRegen = (millisecondsSinceHPRegen + deltaTime) % millisecondsPerHPRegen;
+        hitpointsRegenerationPercentage = millisecondsSinceHPRegen / (double) millisecondsPerHPRegen;
+
+        int currentHP = client.getBoostedSkillLevel(Skill.HITPOINTS);
+        int maxHP = client.getRealSkillLevel(Skill.HITPOINTS);
+        if ( currentHP == maxHP && config.hitpointsOutlineProgressThreshold() == OutlineProgressThreshold.RELATED_STAT_AT_MAX )
+        {
+            hitpointsRegenerationPercentage = 0;
+        }
+        else if ( currentHP > maxHP )
+        {
+            // Show it going down
+            hitpointsRegenerationPercentage = 1 - hitpointsRegenerationPercentage;
+        }
+
         if ( plugin.isBarsDisplayed() && config.renderHitpoints() && !uiElementsOpen )
         {
-            barRenderer.renderBar( config, g, panelComponent, config.hitpointsFullnessDirection(), config.hitpointsLabelStyle(), config.hitpointsLabelPosition(), config.hitpointsGlowThresholdMode(), config.hitpointsGlowThresholdValue(), config.hitpointsOutlineThickness(), config.hitpointsSize().width, config.hitpointsSize().height );
+            barRenderer.renderBar( config, g, panelComponent, Vital.HITPOINTS );
             return config.hitpointsSize();
         }
 
@@ -161,6 +189,7 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
         if (ev.getGameState() == GameState.HOPPING || ev.getGameState() == GameState.LOGIN_SCREEN)
         {
             ticksSinceHPRegen = -2; // For some reason this makes this accurate
+            millisecondsSinceHPRegen = (long)(ticksSinceHPRegen * 0.6 * 1000);
         }
     }
 
@@ -169,6 +198,7 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
         if (ev.getVarbitId() == Varbits.PRAYER_RAPID_HEAL)
         {
             ticksSinceHPRegen = 0;
+            millisecondsSinceHPRegen = 0;
         }
     }
 
@@ -182,16 +212,16 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
         }
 
         ticksSinceHPRegen = (ticksSinceHPRegen + 1) % ticksPerHPRegen;
+        millisecondsSinceHPRegen = (long) (ticksSinceHPRegen * 0.6 * 1000);
         hitpointsRegenerationPercentage = ticksSinceHPRegen / (double) ticksPerHPRegen;
 
         int currentHP = client.getBoostedSkillLevel(Skill.HITPOINTS);
         int maxHP = client.getRealSkillLevel(Skill.HITPOINTS);
-        //if ( currentHP == maxHP )
-        //{
-        //    hitpointsRegenerationPercentage = 0;
-        //}
-        //else if (currentHP > maxHP)
-        if (currentHP > maxHP)
+        if ( currentHP == maxHP && config.hitpointsOutlineProgressThreshold() == OutlineProgressThreshold.RELATED_STAT_AT_MAX )
+        {
+            hitpointsRegenerationPercentage = 0;
+        }
+        else if ( currentHP > maxHP )
         {
             // Show it going down
             hitpointsRegenerationPercentage = 1 - hitpointsRegenerationPercentage;

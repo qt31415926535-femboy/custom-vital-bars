@@ -5,13 +5,11 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum ThresholdGlowMode
+public enum OutlineProgressThreshold
 {
-    ABOVE_PERCENTAGE("Percentage, above threshold"),
-    ABOVE_FLAT_VALUE("Flat value, above threshold"),
-    BELOW_PERCENTAGE("Percentage, below threshold"),
-    BELOW_FLAT_VALUE("Flat value, below threshold"),
-    NONE("Disable glow");
+    RELATED_STAT_AT_MAX("Related stat = max"),
+    ALWAYS_ON("Always progresses"),
+    ALWAYS_OFF("Always disabled");
 
     private final String name;
 

@@ -129,12 +129,14 @@ public class CustomVitalBarsPlugin extends Plugin
 	public void onItemContainerChanged( ItemContainerChanged event )
 	{
 		specialOverlay.onItemContainerChanged( event );
+		prayerOverlay.onItemContainerChanged( event );
 	}
 
 	@Subscribe
 	private void onVarbitChanged(VarbitChanged ev)
 	{
 		healthOverlay.onVarbitChanged( ev );
+		prayerOverlay.onVarbitChanged( ev );
 		energyOverlay.onVarbitChanged( ev );
 	}
 
@@ -145,7 +147,7 @@ public class CustomVitalBarsPlugin extends Plugin
 		healthOverlay.onGameTick( gameTick );
 		specialOverlay.onGameTick( gameTick );
 		prayerOverlay.onGameTick( gameTick );
-		//energyOverlay.onGameTick( gameTick );
+		energyOverlay.onGameTick( gameTick );
 	}
 
 	@Subscribe
@@ -162,8 +164,7 @@ public class CustomVitalBarsPlugin extends Plugin
 		if (    widgetLoaded.getGroupId() == InterfaceID.BANK ||
 				widgetLoaded.getGroupId() == InterfaceID.BANK_INVENTORY ||
 				widgetLoaded.getGroupId() == InterfaceID.BANK_PIN ||
-				widgetLoaded.getGroupId() == InterfaceID.ACHIEVEMENT_DIARY ||
-				widgetLoaded.getGroupId() == InterfaceID.ACHIEVEMENT_DIARY_SCROLL||
+				widgetLoaded.getGroupId() == InterfaceID.ACHIEVEMENT_DIARY_SCROLL ||
 				widgetLoaded.getGroupId() == InterfaceID.ADVENTURE_LOG ||
 				widgetLoaded.getGroupId() == InterfaceID.BARROWS_PUZZLE ||
 				widgetLoaded.getGroupId() == InterfaceID.CHAMBERS_OF_XERIC_STORAGE_UNIT_PRIVATE ||
@@ -182,18 +183,20 @@ public class CustomVitalBarsPlugin extends Plugin
 	@Subscribe
 	public void onWidgetClosed( WidgetClosed widgetClosed )
 	{
+		if ( true )
+		/*
 		if (    widgetClosed.getGroupId() == InterfaceID.BANK ||
+
 				widgetClosed.getGroupId() == InterfaceID.BANK_INVENTORY ||
 				widgetClosed.getGroupId() == InterfaceID.BANK_PIN ||
-				widgetClosed.getGroupId() == InterfaceID.ACHIEVEMENT_DIARY ||
-				widgetClosed.getGroupId() == InterfaceID.ACHIEVEMENT_DIARY_SCROLL||
+				widgetClosed.getGroupId() == InterfaceID.ACHIEVEMENT_DIARY_SCROLL ||
 				widgetClosed.getGroupId() == InterfaceID.ADVENTURE_LOG ||
 				widgetClosed.getGroupId() == InterfaceID.BARROWS_PUZZLE ||
 				widgetClosed.getGroupId() == InterfaceID.CHAMBERS_OF_XERIC_STORAGE_UNIT_PRIVATE ||
 				widgetClosed.getGroupId() == InterfaceID.CHAMBERS_OF_XERIC_STORAGE_UNIT_SHARED ||
 				widgetClosed.getGroupId() == InterfaceID.GROUP_STORAGE ||
 				widgetClosed.getGroupId() == InterfaceID.GROUP_STORAGE_INVENTORY ||
-				widgetClosed.getGroupId() == InterfaceID.DEPOSIT_BOX )
+				widgetClosed.getGroupId() == InterfaceID.DEPOSIT_BOX )*/
 		{
 			healthOverlay.onWidgetClosed(widgetClosed);
 			prayerOverlay.onWidgetClosed(widgetClosed);

@@ -31,10 +31,7 @@ import java.awt.*;
 import javax.inject.Inject;
 
 import net.runelite.api.*;
-import net.runelite.api.events.GameTick;
-import net.runelite.api.events.ItemContainerChanged;
-import net.runelite.api.events.WidgetClosed;
-import net.runelite.api.events.WidgetLoaded;
+import net.runelite.api.events.*;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
@@ -53,6 +50,9 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
     private static final Color ACTIVE_PRAYER_COLOR = new Color(57, 255, 186, 225);
     private static final Color PRAYER_HEAL_COLOR = new Color(57, 255, 186, 75);
 
+    private static final int PRAYER_REGENERATION_INTERVAL_TICKS = 12;
+    private static final long PRAYER_REGENERATION_INTERVAL_MILLISECONDS = (long)(PRAYER_REGENERATION_INTERVAL_TICKS * 0.6 * 1000);
+
     private final Client client;
 
     private final CustomVitalBarsPlugin plugin;
@@ -63,10 +63,16 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
 
     private CustomVitalBarsComponent barRenderer;
 
+    private boolean regenPotionEffectActive = false;
     private boolean uiElementsOpen = false;
     private int prayerBonus;
 
-    private double elapsedPrayerTime;
+    private long deltaTime;
+    private long lastTime;
+
+    private long elapsedPrayerTimeInMilliseconds;
+    private double elapsedPrayerTimeInTicks;
+    private double prayerConsumptionRateOrRegeneration;
 
     @Inject
     private ItemManager itemManager;
@@ -116,28 +122,37 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
                     return prayerColor;
                 },
                 () -> PRAYER_HEAL_COLOR,
-                () ->
-                {
-                    double prayerTimeCost = getCurrentPrayerTimeCost();
-                    if ( prayerTimeCost == -1 )
-                    {
-                        return 0d;
-                    }
-                    return 1 - (elapsedPrayerTime % prayerTimeCost) / prayerTimeCost;
-                }
-
-
-
-
+                () -> prayerConsumptionRateOrRegeneration
         );
     }
 
     @Override
     public Dimension render( Graphics2D g )
     {
+        deltaTime = java.time.Instant.now().toEpochMilli() - lastTime;
+        lastTime = java.time.Instant.now().toEpochMilli();
+
+        if ( !regenPotionEffectActive )
+        {
+            double prayerTimeCost = getCurrentPrayerTimeCost();
+            if (prayerTimeCost == -1) {
+                prayerConsumptionRateOrRegeneration = 0;
+                elapsedPrayerTimeInMilliseconds = 0;
+            } else {
+                elapsedPrayerTimeInMilliseconds = (long) ((elapsedPrayerTimeInMilliseconds + deltaTime) % prayerTimeCost);
+                prayerConsumptionRateOrRegeneration = 1 - elapsedPrayerTimeInMilliseconds / prayerTimeCost;
+            }
+        }
+        else
+        {
+            elapsedPrayerTimeInMilliseconds = (elapsedPrayerTimeInMilliseconds + deltaTime) % PRAYER_REGENERATION_INTERVAL_MILLISECONDS;
+
+            prayerConsumptionRateOrRegeneration = (double)elapsedPrayerTimeInMilliseconds / PRAYER_REGENERATION_INTERVAL_MILLISECONDS;
+        }
+
         if ( plugin.isBarsDisplayed() && config.renderPrayer() && !uiElementsOpen )
         {
-            barRenderer.renderBar( config, g, panelComponent, config.prayerFullnessDirection(), config.prayerLabelStyle(), config.prayerLabelPosition(), config.prayerGlowThresholdMode(), config.prayerGlowThresholdValue(), config.prayerOutlineThickness(), config.prayerSize().width, config.prayerSize().height );
+            barRenderer.renderBar( config, g, panelComponent, Vital.PRAYER );
 
             return config.prayerSize();
         }
@@ -196,13 +211,31 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
 
     public void onGameTick( GameTick gameTick )
     {
-        if ( isAnyPrayerActive() )
+        if ( !regenPotionEffectActive )
         {
-            elapsedPrayerTime += 0.6;
+            if ( isAnyPrayerActive() )
+            {
+                double _prayerTimeCost = getCurrentPrayerTimeCost();
+
+                elapsedPrayerTimeInTicks = (elapsedPrayerTimeInTicks + 1) % (_prayerTimeCost / 1000 / 0.6d);
+                elapsedPrayerTimeInMilliseconds = (long)((elapsedPrayerTimeInTicks * 0.6 * 1000) % _prayerTimeCost);
+
+                prayerConsumptionRateOrRegeneration = 1 - elapsedPrayerTimeInMilliseconds / _prayerTimeCost;
+            }
+            else
+            {
+                elapsedPrayerTimeInTicks = 0;
+                elapsedPrayerTimeInMilliseconds = 0;
+
+                prayerConsumptionRateOrRegeneration = 0;
+            }
         }
         else
         {
-            elapsedPrayerTime = 0;
+            elapsedPrayerTimeInTicks = (elapsedPrayerTimeInTicks + 1) % PRAYER_REGENERATION_INTERVAL_TICKS;
+            elapsedPrayerTimeInMilliseconds = (long)((elapsedPrayerTimeInTicks * 0.6 * 1000) % PRAYER_REGENERATION_INTERVAL_MILLISECONDS);
+
+            prayerConsumptionRateOrRegeneration = elapsedPrayerTimeInTicks / PRAYER_REGENERATION_INTERVAL_TICKS;
         }
     }
 
@@ -216,6 +249,20 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
     public void onWidgetClosed( WidgetClosed widgetClosed )
     {
         uiElementsOpen = false;
+    }
+
+    @Subscribe
+    protected void onVarbitChanged( VarbitChanged change )
+    {
+        // much love to supalosa's Prayer Regeneration Timer plugin
+        if ( change.getVarbitId() == Varbits.BUFF_PRAYER_REGENERATION )
+        {
+            prayerConsumptionRateOrRegeneration = 0;
+            elapsedPrayerTimeInTicks = 0;
+            elapsedPrayerTimeInMilliseconds = 0;
+            int value = change.getValue();
+            regenPotionEffectActive = (value > 0);
+        }
     }
 
     private boolean isAnyPrayerActive()
@@ -246,7 +293,7 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
         return total;
     }
 
-    private static int getDrainEffect(Client client)
+    private int getDrainEffect(Client client)
     {
         int drainEffect = 0;
 
@@ -261,7 +308,7 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
         return drainEffect;
     }
 
-    double getCurrentPrayerTimeCost()
+    private double getCurrentPrayerTimeCost()
     {
         final int drainEffect = getDrainEffect(client);
 
@@ -270,10 +317,9 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
             return -1;
         }
 
-        // Calculate how many seconds each prayer points last so the prayer bonus can be applied
+        // Calculate how many milliseconds each prayer points last so the prayer bonus can be applied
         // https://oldschool.runescape.wiki/w/Prayer#Prayer_drain_mechanics
-        final int drainResistance = 2 * prayerBonus + 60;
-        final double secondsPerPoint = 0.6 * ((double) drainResistance / drainEffect);
-        return secondsPerPoint;
+        int drainResistance = 2 * prayerBonus + 60;
+        return 1000 * 0.6d * (double)drainResistance / drainEffect;
     }
 }

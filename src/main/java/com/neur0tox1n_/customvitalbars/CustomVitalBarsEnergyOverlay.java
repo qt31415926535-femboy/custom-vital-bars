@@ -47,10 +47,7 @@ import net.runelite.client.plugins.itemstats.Effect;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 import net.runelite.client.plugins.itemstats.StatChange;
 import net.runelite.client.plugins.runenergy.RunEnergyPlugin;
-import net.runelite.client.ui.overlay.Overlay;
-import net.runelite.client.ui.overlay.OverlayPanel;
-import net.runelite.client.ui.overlay.OverlayLayer;
-import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.ui.overlay.*;
 import net.runelite.client.util.RSTimeUnit;
 
 import static net.runelite.api.ItemID.*;
@@ -58,7 +55,6 @@ import static net.runelite.api.ItemID.MAX_CAPE;
 
 public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 {
-
     // love to RunEnergyPlugin
     @Getter
     protected enum GracefulEquipmentSlot
@@ -114,11 +110,19 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 
     private int staminaEffectActive = 0;
 
-    private int ticksSinceEnergyRegen = 0;
+    private int ticksSinceRunEnergyRegen = 0;
+
+    private int nextHighestRunEnergyMark;
+    private int ticksToRunEnergyRegen;
+    private long millisecondsToRunEnergyRegen;
 
     private boolean localPlayerRunningToDestination = false;
 
     private WorldPoint prevLocalPlayerLocation;
+
+    private long millisecondsSinceRunEnergyRegen;
+    private long deltaTime;
+    private long lastTime;
 
     @Inject
     CustomVitalBarsEnergyOverlay(
@@ -129,7 +133,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
     {
         super(plugin);
 
-        //setPriority(OverlayPriority.LOW);
+        setPriority(OverlayPriority.HIGH);
         setPosition(OverlayPosition.DYNAMIC);
         setLayer(OverlayLayer.UNDER_WIDGETS);
         setMovable(true);
@@ -168,10 +172,50 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
     @Override
     public Dimension render( Graphics2D g )
     {
+        deltaTime = java.time.Instant.now().toEpochMilli() - lastTime;
+        lastTime = java.time.Instant.now().toEpochMilli();
+
+        if ( client.getVarbitValue(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) == 0 )
+        {
+            if ( !localPlayerRunningToDestination )
+            {
+                int rawRunEnergyRegenPerTick = (int)Math.floor( (1 + (getGracefulRecoveryBoost() / 100.0d)) * (Math.floor( client.getBoostedSkillLevel( Skill.AGILITY ) / 6.0d ) + 8));
+
+                if ( client.getEnergy() > nextHighestRunEnergyMark )
+                {
+                    nextHighestRunEnergyMark = ((client.getEnergy() + 99) / 100) * 100;
+
+                    ticksToRunEnergyRegen = (int) (Math.ceil((nextHighestRunEnergyMark - client.getEnergy()) / (double) rawRunEnergyRegenPerTick));
+                    millisecondsToRunEnergyRegen = (long)(ticksToRunEnergyRegen * 0.6 * 1000);
+                }
+
+                if ( millisecondsToRunEnergyRegen > 0 )
+                {
+                    millisecondsSinceRunEnergyRegen = (millisecondsSinceRunEnergyRegen + deltaTime) % millisecondsToRunEnergyRegen;
+                    staminaDurationRemainingOrRegeneration = millisecondsSinceRunEnergyRegen / (double)millisecondsToRunEnergyRegen;
+                }
+                else
+                {
+                    millisecondsSinceRunEnergyRegen = 0;
+                    staminaDurationRemainingOrRegeneration = 0;
+                }
+                
+                int currentRunEnergy = client.getEnergy();
+                int maxRunEnergy = MAX_RUN_ENERGY_VALUE * 100;
+                if ( currentRunEnergy == maxRunEnergy )
+                {
+                    nextHighestRunEnergyMark = maxRunEnergy - 1000;
+                    if ( config.energyOutlineProgressThreshold() == OutlineProgressThreshold.RELATED_STAT_AT_MAX )
+                    {
+                        staminaDurationRemainingOrRegeneration = 0;
+                    }
+                }
+            }
+        }
+
         if ( plugin.isBarsDisplayed() && config.renderEnergy() && !uiElementsOpen )
         {
-            barRenderer.renderBar( config, g, panelComponent, config.energyFullnessDirection(), config.energyLabelStyle(), config.energyLabelPosition(), config.energyGlowThresholdMode(), config.energyGlowThresholdValue(), config.energyOutlineThickness(), config.energySize().width, config.energySize().height );
-
+            barRenderer.renderBar( config, g, panelComponent, Vital.RUN_ENERGY );
             return config.energySize();
         }
 
@@ -235,7 +279,8 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
     {
         if (ev.getGameState() == GameState.HOPPING || ev.getGameState() == GameState.LOGIN_SCREEN)
         {
-            ticksSinceEnergyRegen = -2; // For some reason this makes this accurate
+            ticksSinceRunEnergyRegen = -2; // For some reason this makes this accurate
+            millisecondsSinceRunEnergyRegen = (long)(ticksSinceRunEnergyRegen * 0.6 * 1000); // I guess I follow suit
         }
     }
 
@@ -263,29 +308,59 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
         staminaDurationRemainingOrRegeneration = duration.getSeconds();
     }
 
-    /* wip for Energy regeneration
-
     @Subscribe
     public void onGameTick(GameTick event)
     {
-        localPlayerRunningToDestination =
-                prevLocalPlayerLocation != null &&
-                        client.getLocalDestinationLocation() != null &&
-                        prevLocalPlayerLocation.distanceTo(client.getLocalPlayer().getWorldLocation()) > 1;
+        if ( client.getVarbitValue(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) == 0 )
+        {
+            localPlayerRunningToDestination =
+                    prevLocalPlayerLocation != null &&
+                            client.getLocalDestinationLocation() != null &&
+                            prevLocalPlayerLocation.distanceTo(client.getLocalPlayer().getWorldLocation()) > 1;
+            prevLocalPlayerLocation = client.getLocalPlayer().getWorldLocation();
 
-        prevLocalPlayerLocation = client.getLocalPlayer().getWorldLocation();
+            if ( localPlayerRunningToDestination )
+            {
+                ticksSinceRunEnergyRegen = 0;
+                millisecondsSinceRunEnergyRegen = 0;
+                staminaDurationRemainingOrRegeneration = 0;
+            }
+            else
+            {
+                int rawRunEnergyRegenPerTick = (int)Math.floor( (1 + (getGracefulRecoveryBoost() / 100.0d)) * (Math.floor( client.getBoostedSkillLevel( Skill.AGILITY ) / 6.0d ) + 8));
 
-        if ( localPlayerRunningToDestination )
-        {
-            ticksSinceEnergyRegen = 0;
-        }
-        else
-        {
-            ticksSinceEnergyRegen += 1;
-        }
-        if ( staminaEffectActive == 0 )
-        {
-            updateEnergyRegenProgress();
+                if ( client.getEnergy() > nextHighestRunEnergyMark )
+                {
+                    nextHighestRunEnergyMark = ((client.getEnergy() + 99) / 100) * 100;
+
+                    ticksToRunEnergyRegen = (int)(Math.ceil((nextHighestRunEnergyMark - client.getEnergy()) / (double) rawRunEnergyRegenPerTick));
+                    millisecondsToRunEnergyRegen = (long)(ticksToRunEnergyRegen * 0.6 * 1000);
+                }
+
+                if ( ticksToRunEnergyRegen > 0 )
+                {
+                    ticksSinceRunEnergyRegen = (ticksSinceRunEnergyRegen + 1) % ticksToRunEnergyRegen;
+                    millisecondsSinceRunEnergyRegen = (long)(ticksSinceRunEnergyRegen * 0.6 * 1000);
+                    staminaDurationRemainingOrRegeneration = ticksSinceRunEnergyRegen / (double)ticksToRunEnergyRegen;
+                }
+                else
+                {
+                    ticksSinceRunEnergyRegen = 0;
+                    millisecondsSinceRunEnergyRegen = 0;
+                    staminaDurationRemainingOrRegeneration = 0;
+                }
+
+                int currentRunEnergy = client.getEnergy();
+                int maxRunEnergy = MAX_RUN_ENERGY_VALUE * 100;
+                if ( currentRunEnergy == maxRunEnergy )
+                {
+                    nextHighestRunEnergyMark = maxRunEnergy - 1000;
+                    if ( config.energyOutlineProgressThreshold() == OutlineProgressThreshold.RELATED_STAT_AT_MAX )
+                    {
+                        staminaDurationRemainingOrRegeneration = 0;
+                    }
+                }
+            }
         }
     }
 
@@ -324,34 +399,4 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 
         return boost;
     }
-
-    private void updateEnergyRegenProgress()
-    {
-        // Calculate the amount of energy recovered every second
-        //double recoverRate = (48 + client.getBoostedSkillLevel(Skill.AGILITY)) / 3.6;
-        //recoverRate
-
-        // Calculate the amount of energy recovered every tick
-        double recoverRate = Math.floor(client.getBoostedSkillLevel(Skill.AGILITY) / 6.0f) + 8;
-        recoverRate *= 1.0 + getGracefulRecoveryBoost() / 100.0;
-
-
-
-
-
-        ticksSinceEnergyRegen / recoverRate
-
-
-
-
-
-        // Calculate the number of seconds left
-        final double secondsLeft = (10000 - client.getEnergy()) / recoverRate;
-        return (int) secondsLeft;
-
-
-        staminaDurationRemainingOrRegeneration = finalStaminaDurationRemainingOrRegeneration;
-    }
-
-         */
 }
