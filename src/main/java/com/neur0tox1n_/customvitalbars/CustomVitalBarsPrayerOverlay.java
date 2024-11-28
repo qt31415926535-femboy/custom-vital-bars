@@ -49,6 +49,8 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
     private static final Color PRAYER_COLOR = new Color(50, 200, 200, 175);
     private static final Color ACTIVE_PRAYER_COLOR = new Color(57, 255, 186, 225);
     private static final Color PRAYER_HEAL_COLOR = new Color(57, 255, 186, 75);
+    private static final Color PRAYER_REGEN_COLOR = new Color(109, 125, 119, 255);
+    private static final Color ACTIVE_PRAYER_AND_PRAYER_REGEN_COLOR = new Color(120, 124, 102, 255);
 
     private static final int PRAYER_REGENERATION_INTERVAL_TICKS = 12;
     private static final long PRAYER_REGENERATION_INTERVAL_MILLISECONDS = (long)(PRAYER_REGENERATION_INTERVAL_TICKS * 0.6 * 1000);
@@ -108,13 +110,12 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
                 () -> getRestoreValue(Skill.PRAYER.getName()),
                 () ->
                 {
-                    Color prayerColor = PRAYER_COLOR;
-
+                    Color prayerColor = regenPotionEffectActive ? PRAYER_REGEN_COLOR : PRAYER_COLOR;
                     for (Prayer pray : Prayer.values())
                     {
                         if (client.isPrayerActive(pray))
                         {
-                            prayerColor = ACTIVE_PRAYER_COLOR;
+                            prayerColor = regenPotionEffectActive ? ACTIVE_PRAYER_AND_PRAYER_REGEN_COLOR : ACTIVE_PRAYER_COLOR;
                             break;
                         }
                     }
