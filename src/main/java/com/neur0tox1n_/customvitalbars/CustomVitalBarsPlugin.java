@@ -86,6 +86,7 @@ public class CustomVitalBarsPlugin extends Plugin
 
 	@Getter(AccessLevel.PACKAGE)
 	private boolean barsDisplayed;
+	private boolean hideWhenBigUIOpen;
 
 	private int lastCombatActionTickCount;
 
@@ -99,6 +100,7 @@ public class CustomVitalBarsPlugin extends Plugin
 		overlayManager.add( prayerOverlay );
 		overlayManager.add( energyOverlay );
 		overlayManager.add( specialOverlay );
+		hideWhenBigUIOpen = config.hideWhenLargeInterfacePanelsOpen();
 	}
 
 	@Override
@@ -156,14 +158,23 @@ public class CustomVitalBarsPlugin extends Plugin
 		if (CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("hideAfterCombatDelay")) {
 			clientThread.invokeLater(this::checkCustomVitalBars);
 		}
+		hideWhenBigUIOpen = config.hideWhenLargeInterfacePanelsOpen();
 	}
 
 	@Subscribe
 	public void onWidgetLoaded( WidgetLoaded widgetLoaded )
 	{
+		if ( hideWhenBigUIOpen )
+		{
+			return;
+		}
+
 		if (    widgetLoaded.getGroupId() == InterfaceID.BANK ||
 				widgetLoaded.getGroupId() == InterfaceID.BANK_INVENTORY ||
 				widgetLoaded.getGroupId() == InterfaceID.BANK_PIN ||
+				widgetLoaded.getGroupId() == InterfaceID.DEPOSIT_BOX ||
+				widgetLoaded.getGroupId() == InterfaceID.FAIRY_RING_PANEL ||
+				widgetLoaded.getGroupId() == InterfaceID.SEED_VAULT_INVENTORY ||
 				widgetLoaded.getGroupId() == InterfaceID.ACHIEVEMENT_DIARY_SCROLL ||
 				widgetLoaded.getGroupId() == InterfaceID.ADVENTURE_LOG ||
 				widgetLoaded.getGroupId() == InterfaceID.BARROWS_PUZZLE ||
@@ -171,7 +182,19 @@ public class CustomVitalBarsPlugin extends Plugin
 				widgetLoaded.getGroupId() == InterfaceID.CHAMBERS_OF_XERIC_STORAGE_UNIT_SHARED ||
 				widgetLoaded.getGroupId() == InterfaceID.GROUP_STORAGE ||
 				widgetLoaded.getGroupId() == InterfaceID.GROUP_STORAGE_INVENTORY ||
-				widgetLoaded.getGroupId() == InterfaceID.DEPOSIT_BOX )
+				widgetLoaded.getGroupId() == InterfaceID.GENERIC_SCROLL ||
+				widgetLoaded.getGroupId() == InterfaceID.CLUESCROLL ||
+				widgetLoaded.getGroupId() == InterfaceID.CLUESCROLL_REWARD ||
+				widgetLoaded.getGroupId() == InterfaceID.TRADE_INVENTORY ||
+				widgetLoaded.getGroupId() == InterfaceID.SHOP_INVENTORY ||
+				widgetLoaded.getGroupId() == InterfaceID.DUEL_INVENTORY ||
+				widgetLoaded.getGroupId() == InterfaceID.GRAND_EXCHANGE_INVENTORY ||
+				widgetLoaded.getGroupId() == InterfaceID.GUIDE_PRICES_INVENTORY ||
+				widgetLoaded.getGroupId() == InterfaceID.EQUIPMENT_INVENTORY ||
+				widgetLoaded.getGroupId() == InterfaceID.KEPT_ON_DEATH ||
+				widgetLoaded.getGroupId() == InterfaceID.COLLECTION_LOG ||
+				widgetLoaded.getGroupId() == InterfaceID.KILL_LOG ||
+				widgetLoaded.getGroupId() == InterfaceID.WORLD_MAP )
 		{
 			healthOverlay.onWidgetLoaded(widgetLoaded);
 			prayerOverlay.onWidgetLoaded(widgetLoaded);
@@ -183,26 +206,10 @@ public class CustomVitalBarsPlugin extends Plugin
 	@Subscribe
 	public void onWidgetClosed( WidgetClosed widgetClosed )
 	{
-		if ( true )
-		/*
-		if (    widgetClosed.getGroupId() == InterfaceID.BANK ||
-
-				widgetClosed.getGroupId() == InterfaceID.BANK_INVENTORY ||
-				widgetClosed.getGroupId() == InterfaceID.BANK_PIN ||
-				widgetClosed.getGroupId() == InterfaceID.ACHIEVEMENT_DIARY_SCROLL ||
-				widgetClosed.getGroupId() == InterfaceID.ADVENTURE_LOG ||
-				widgetClosed.getGroupId() == InterfaceID.BARROWS_PUZZLE ||
-				widgetClosed.getGroupId() == InterfaceID.CHAMBERS_OF_XERIC_STORAGE_UNIT_PRIVATE ||
-				widgetClosed.getGroupId() == InterfaceID.CHAMBERS_OF_XERIC_STORAGE_UNIT_SHARED ||
-				widgetClosed.getGroupId() == InterfaceID.GROUP_STORAGE ||
-				widgetClosed.getGroupId() == InterfaceID.GROUP_STORAGE_INVENTORY ||
-				widgetClosed.getGroupId() == InterfaceID.DEPOSIT_BOX )*/
-		{
-			healthOverlay.onWidgetClosed(widgetClosed);
-			prayerOverlay.onWidgetClosed(widgetClosed);
-			energyOverlay.onWidgetClosed(widgetClosed);
-			specialOverlay.onWidgetClosed(widgetClosed);
-		}
+		healthOverlay.onWidgetClosed( widgetClosed );
+		prayerOverlay.onWidgetClosed( widgetClosed );
+		energyOverlay.onWidgetClosed( widgetClosed );
+		specialOverlay.onWidgetClosed( widgetClosed );
 	}
 
 	private void checkCustomVitalBars()

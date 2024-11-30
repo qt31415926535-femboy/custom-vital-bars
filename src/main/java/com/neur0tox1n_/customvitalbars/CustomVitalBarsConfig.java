@@ -194,7 +194,7 @@ public interface CustomVitalBarsConfig extends Config
 			position = 19,
 			keyName = "prayerOutlineThickness",
 			name = "Prayer Bar Outline Effects Thickness",
-			description = "How thick to draw an outline around the Prayer bars to show Prayer point consumption progress or Prayer Regeneration Potion regeneration.",
+			description = "How thick to draw an outline around the Prayer bar to show Prayer point consumption progress or Prayer Regeneration Potion regeneration.",
 			section = prayerSettingsSection
 	)
 	@Range(
@@ -254,7 +254,7 @@ public interface CustomVitalBarsConfig extends Config
 	)
 	default LabelStyle energyLabelStyle()
 	{
-		return LabelStyle.SHOW_CURRENT_AND_MAXIMUM;
+		return LabelStyle.SHOW_CURRENT;
 	}
 
 	@ConfigItem(
@@ -354,7 +354,7 @@ public interface CustomVitalBarsConfig extends Config
 	)
 	default LabelStyle specialLabelStyle()
 	{
-		return LabelStyle.SHOW_CURRENT_AND_MAXIMUM;
+		return LabelStyle.SHOW_CURRENT;
 	}
 
 	@ConfigItem(
@@ -416,7 +416,7 @@ public interface CustomVitalBarsConfig extends Config
 			position = 41,
 			keyName = "enableRestorationBars",
 			name = "Show Restores",
-			description = "Visually shows how much will be restored to your bars."
+			description = "Visually shows how much will be restored to your vital bars."
 	)
 	default boolean enableRestorationBars() { return true; }
 
@@ -424,9 +424,16 @@ public interface CustomVitalBarsConfig extends Config
 			position = 42,
 			keyName = "hideAfterCombatDelay",
 			name = "Hide after combat delay",
-			description = "Amount of ticks before hiding status bars after no longer in combat. 0 = always show status bars."
+			description = "Amount of ticks before hiding vital bars after no longer in combat. 0 = always show status bars."
 	)
 	@Units(Units.TICKS)
 	default int hideAfterCombatDelay() { return 0; }
 
+	@ConfigItem(
+			position = 43,
+			keyName = "hideWhenLargeInterfacePanelsOpen",
+			name = "Hide when large UI elements are open",
+			description = "Whether to hide the vital bars when large UI elements are open (ie Bank, Clue Scroll text)"
+	)
+	default boolean hideWhenLargeInterfacePanelsOpen() { return true; }
 }

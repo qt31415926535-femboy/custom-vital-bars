@@ -117,6 +117,8 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
     private long millisecondsToRunEnergyRegen;
 
     private boolean localPlayerRunningToDestination = false;
+    private boolean lastLocalPlayerRunningToDestination = false;
+    private boolean regenAlreadyStarted = false;
 
     private WorldPoint prevLocalPlayerLocation;
 
@@ -313,17 +315,29 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
     {
         if ( client.getVarbitValue(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) == 0 )
         {
+            lastLocalPlayerRunningToDestination = localPlayerRunningToDestination;
             localPlayerRunningToDestination =
                     prevLocalPlayerLocation != null &&
                             client.getLocalDestinationLocation() != null &&
                             prevLocalPlayerLocation.distanceTo(client.getLocalPlayer().getWorldLocation()) > 1;
             prevLocalPlayerLocation = client.getLocalPlayer().getWorldLocation();
 
+            if ( !localPlayerRunningToDestination && !lastLocalPlayerRunningToDestination && !regenAlreadyStarted )
+            {
+                ticksSinceRunEnergyRegen = 0;
+                millisecondsSinceRunEnergyRegen = 0;
+                staminaDurationRemainingOrRegeneration = 0;
+
+                regenAlreadyStarted = true;
+            }
+
             if ( localPlayerRunningToDestination )
             {
                 ticksSinceRunEnergyRegen = 0;
                 millisecondsSinceRunEnergyRegen = 0;
                 staminaDurationRemainingOrRegeneration = 0;
+
+                regenAlreadyStarted = false;
             }
             else
             {
