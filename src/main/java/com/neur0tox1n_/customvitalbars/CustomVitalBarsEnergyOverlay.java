@@ -376,7 +376,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
                 }
                 if ( currentRunEnergy >= nextHighestRunEnergyMark )
                 {
-                    int rawRunEnergyRegenPerTick = (int) Math.floor((1 + (getGracefulRecoveryBoost() / 100.0d)) * (Math.floor(client.getBoostedSkillLevel(Skill.AGILITY) / 6.0d) + 8));
+                    int rawRunEnergyRegenPerTick = (int) Math.floor((1 + (getGracefulRecoveryBoost() / 100.0d)) * (Math.floor(client.getBoostedSkillLevel(Skill.AGILITY) / 10.0d ) + 15));
 
                     nextHighestRunEnergyMark = ((currentRunEnergy + 99) / 100) * 100;
 
