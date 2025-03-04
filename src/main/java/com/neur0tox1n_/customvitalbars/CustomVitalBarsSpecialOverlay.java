@@ -12,7 +12,6 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
-import net.runelite.client.plugins.statusbars.Viewport;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -103,10 +102,10 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
         }
 
         if ( config.hideWhenSidebarPanelClosed() ) {
-            net.runelite.client.plugins.statusbars.Viewport curViewport = null;
+            Viewport curViewport = null;
             Widget curWidget = null;
 
-            for (net.runelite.client.plugins.statusbars.Viewport viewport : Viewport.values()) {
+            for (Viewport viewport : Viewport.values()) {
                 final Widget viewportWidget = client.getWidget(viewport.getViewport());
                 if (viewportWidget != null && !viewportWidget.isHidden()) {
                     curViewport = viewport;

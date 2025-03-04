@@ -49,8 +49,6 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.itemstats.Effect;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 import net.runelite.client.plugins.itemstats.StatChange;
-import net.runelite.client.plugins.statusbars.StatusBarsConfig;
-import net.runelite.client.plugins.statusbars.Viewport;
 import net.runelite.client.ui.overlay.*;
 import net.runelite.client.util.RSTimeUnit;
 
