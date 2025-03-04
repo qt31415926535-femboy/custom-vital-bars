@@ -5,19 +5,19 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum Vital
+public enum PlacementDirection
 {
-    HITPOINTS(0),
-    PRAYER(1),
-    RUN_ENERGY(2),
-    SPECIAL_ENERGY(3),
-    WARMTH(4);
+    TOP("Top"),
+    BOTTOM("Bottom"),
+    LEFT("Left"),
+    RIGHT("Right"),
+    CENTRE("Centre");
 
-    private final int value;
+    private final String name;
 
     @Override
     public String toString()
     {
-        return value + "";
+        return getName();
     }
 }

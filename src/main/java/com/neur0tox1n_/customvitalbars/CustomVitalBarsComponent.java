@@ -27,6 +27,9 @@
 package net.runelite.client.plugins.customvitalbars;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import java.math.RoundingMode;
@@ -56,6 +59,7 @@ class CustomVitalBarsComponent
     private final Supplier<Color> colorSupplier;
     private final Supplier<Color> healColorSupplier;
     private final Supplier<Double> timeBasedEffectCounterSupplier;
+    private final Supplier<Image> iconSupplier;
     private int maxValue;
     private int currentValue;
 
@@ -77,61 +81,85 @@ class CustomVitalBarsComponent
     void renderBar( CustomVitalBarsConfig config, Graphics2D graphics, PanelComponent component, Vital whichVital )
     {
         FullnessDirection dir = null;
-        LabelStyle labelStyle = null;
-        LabelPlacement labelLoc = null;
+        TextFormatting textFormat = null;
+        PlacementDirection textLoc = null;
+        int textOffsetX = 0, textOffsetY = 0;
         ThresholdGlowMode thresholdGlowMode = null;
         OutlineProgressThreshold thresholdOutlineProgress = null;
         int thresholdGlowValue = 0, outlineThickness = 0, width = 0, height = 0;
+        double iconScale = 0d;
+        PlacementDirection iconLoc = null;
+        int iconOffsetX = 0, iconOffsetY = 0;
 
         if ( whichVital == Vital.HITPOINTS )
         {
             dir = config.hitpointsFullnessDirection();
-            labelStyle = config.hitpointsLabelStyle();
-            labelLoc = config.hitpointsLabelPosition();
+            textFormat = config.hitpointsTextFormat();
+            textLoc = config.hitpointsTextPosition();
+            textOffsetX = config.hitpointsTextOffsetX();
+            textOffsetY = config.hitpointsTextOffsetY();
             thresholdGlowMode = config.hitpointsGlowThresholdMode();
             thresholdOutlineProgress = config.hitpointsOutlineProgressThreshold();
-
             thresholdGlowValue = config.hitpointsGlowThresholdValue();
             outlineThickness = config.hitpointsOutlineThickness();
+            iconScale = config.hitpointsIconScale();
+            iconLoc = config.hitpointsIconPosition();
+            iconOffsetX = config.hitpointsIconOffsetX();
+            iconOffsetY = config.hitpointsIconOffsetY();
             width = config.hitpointsSize().width;
             height = config.hitpointsSize().height;
         }
         else if ( whichVital == Vital.PRAYER )
         {
             dir = config.prayerFullnessDirection();
-            labelStyle = config.prayerLabelStyle();
-            labelLoc = config.prayerLabelPosition();
+            textFormat = config.prayerTextFormat();
+            textLoc = config.prayerTextPosition();
+            textOffsetX = config.prayerTextOffsetX();
+            textOffsetY = config.prayerTextOffsetY();
             thresholdGlowMode = config.prayerGlowThresholdMode();
             thresholdOutlineProgress = config.prayerOutlineProgressThreshold();
-
             thresholdGlowValue = config.prayerGlowThresholdValue();
             outlineThickness = config.prayerOutlineThickness();
+            iconScale = config.prayerIconScale();
+            iconLoc = config.prayerIconPosition();
+            iconOffsetX = config.prayerIconOffsetX();
+            iconOffsetY = config.prayerIconOffsetY();
             width = config.prayerSize().width;
             height = config.prayerSize().height;
         }
         else if ( whichVital == Vital.RUN_ENERGY )
         {
             dir = config.energyFullnessDirection();
-            labelStyle = config.energyLabelStyle();
-            labelLoc = config.energyLabelPosition();
+            textFormat = config.energyTextFormat();
+            textLoc = config.energyTextPosition();
+            textOffsetX = config.energyTextOffsetX();
+            textOffsetY = config.energyTextOffsetY();
             thresholdGlowMode = config.energyGlowThresholdMode();
             thresholdOutlineProgress = config.energyOutlineProgressThreshold();
-
             thresholdGlowValue = config.energyGlowThresholdValue();
             outlineThickness = config.energyOutlineThickness();
+            iconScale = config.energyIconScale();
+            iconLoc = config.energyIconPosition();
+            iconOffsetX = config.energyIconOffsetX();
+            iconOffsetY = config.energyIconOffsetY();
             width = config.energySize().width;
             height = config.energySize().height;
         }
         else if ( whichVital == Vital.SPECIAL_ENERGY )
         {
             dir = config.specialFullnessDirection();
-            labelStyle = config.specialLabelStyle();
-            labelLoc = config.specialLabelPosition();
+            textFormat = config.specialTextFormat();
+            textLoc = config.specialTextPosition();
+            textOffsetX = config.specialTextOffsetX();
+            textOffsetY = config.specialTextOffsetY();
             thresholdGlowMode = config.specialGlowThresholdMode();
             thresholdOutlineProgress = config.specialOutlineProgressThreshold();
-
             thresholdGlowValue = config.specialGlowThresholdValue();
             outlineThickness = config.specialOutlineThickness();
+            iconScale = config.specialIconScale();
+            iconLoc = config.specialIconPosition();
+            iconOffsetX = config.specialIconOffsetX();
+            iconOffsetY = config.specialIconOffsetY();
             width = config.specialSize().width;
             height = config.specialSize().height;
         }
@@ -238,9 +266,14 @@ class CustomVitalBarsComponent
             renderRestore(config, graphics, dir, component.getBounds().x, component.getBounds().y, width, height);
         }
 
-        if ( labelStyle != LabelStyle.HIDE )
+        if ( textFormat != TextFormatting.HIDE )
         {
-            renderText(config, graphics, labelStyle, labelLoc, outlineThickness, component.getBounds().x, component.getBounds().y, width, height );
+            renderText(config, graphics, textFormat, textLoc, textOffsetX, textOffsetY, outlineThickness, component.getBounds().x, component.getBounds().y, width, height );
+        }
+
+        if ( iconScale > 0d )
+        {
+            renderIcon( config, graphics, iconScale, iconLoc, iconOffsetX, iconOffsetY, outlineThickness, component.getBounds().x, component.getBounds().y, width, height );
         }
     }
 
@@ -297,16 +330,16 @@ class CustomVitalBarsComponent
         }
     }
 
-    private void renderText(CustomVitalBarsConfig config, Graphics2D graphics, LabelStyle labelStyle, LabelPlacement labelLoc, int outlineSize, int x, int y, int barWidth, int barHeight )
+    private void renderText(CustomVitalBarsConfig config, Graphics2D graphics, TextFormatting textFormat, PlacementDirection textLoc, int textOffsetX, int textOffsetY, int outlineSize, int x, int y, int barWidth, int barHeight )
     {
         graphics.setFont(FontManager.getRunescapeSmallFont());
 
         String counterText = Integer.toString(currentValue);
-        if ( labelStyle == LabelStyle.SHOW_CURRENT_AND_MAXIMUM )
+        if ( textFormat == TextFormatting.SHOW_CURRENT_AND_MAXIMUM )
         {
             counterText = currentValue + " / " + maxValue;
         }
-        else if ( labelStyle == LabelStyle.SHOW_PERCENTAGE )
+        else if ( textFormat == TextFormatting.SHOW_PERCENTAGE )
         {
             df.setRoundingMode( RoundingMode.DOWN );
             counterText = df.format( (float) (currentValue * 100) / maxValue ) + "%";
@@ -317,21 +350,21 @@ class CustomVitalBarsComponent
         int xOffset = (barWidth / 2) - (sizeOfCounterX / 2);
         int yOffset = -(int) Math.floor(outlineSize * 1.75);
 
-        if ( labelLoc == LabelPlacement.CENTRE )
+        if ( textLoc == PlacementDirection.CENTRE )
         {
             xOffset = (barWidth / 2) - (sizeOfCounterX / 2);
             yOffset = (barHeight / 2) + (sizeOfCounterY / 2);
         }
-        else if ( labelLoc == LabelPlacement.BOTTOM )
+        else if ( textLoc == PlacementDirection.BOTTOM )
         {
             yOffset = barHeight + sizeOfCounterY + (int) Math.floor(outlineSize * 1.75);
         }
-        else if ( labelLoc == LabelPlacement.LEFT )
+        else if ( textLoc == PlacementDirection.LEFT )
         {
             xOffset = -(int) Math.floor(sizeOfCounterX * 1.125) - (int) Math.floor(outlineSize * 1.75);
             yOffset = (barHeight / 2) + (sizeOfCounterY / 2);
         }
-        else if ( labelLoc == LabelPlacement.RIGHT )
+        else if ( textLoc == PlacementDirection.RIGHT )
         {
             xOffset = barWidth + 4 + (int) Math.floor(outlineSize * 1.75);
             yOffset = (barHeight / 2) + (sizeOfCounterY / 2);
@@ -339,9 +372,41 @@ class CustomVitalBarsComponent
 
         final TextComponent textComponent = new TextComponent();
         textComponent.setText( counterText );
-        textComponent.setPosition( new Point(x + xOffset, y + yOffset) );
+        textComponent.setPosition( new Point(x + xOffset + textOffsetX, y + yOffset + textOffsetY) );
         textComponent.render( graphics );
 
+    }
+    private void renderIcon( CustomVitalBarsConfig config, Graphics2D graphics, double iconScale, PlacementDirection iconLoc, int iconOffsetX, int iconOffsetY, int outlineSize, int x, int y, int barWidth, int barHeight )
+    {
+        final Image icon = iconSupplier.get();
+        if (icon != null)
+        {
+            double iconWidth  = icon.getWidth( null ) * iconScale;
+            double iconHeight = icon.getHeight( null ) * iconScale;
+            int xOffset = (int) ((barWidth / 2) - (iconWidth / 2));
+            int yOffset = -(barHeight + (int)Math.floor(outlineSize * 1.75));
+            if ( iconLoc == PlacementDirection.CENTRE )
+            {
+                xOffset = (int) ((barWidth / 2) - (iconWidth / 2));
+                yOffset = 0;
+            }
+            else if ( iconLoc == PlacementDirection.BOTTOM )
+            {
+                yOffset = barHeight + (int) Math.floor(outlineSize * 1.75);
+            }
+            else if ( iconLoc == PlacementDirection.LEFT )
+            {
+                xOffset = -(int) Math.floor(iconWidth * 1.125) - (int) Math.floor(outlineSize * 1.75);
+                yOffset = 0;
+            }
+            else if ( iconLoc == PlacementDirection.RIGHT )
+            {
+                xOffset = barWidth + 4 + (int) Math.floor(outlineSize * 1.75);
+                yOffset = 0;
+            }
+
+            graphics.drawImage(icon, x + xOffset + iconOffsetX, y + yOffset + iconOffsetY, (int) iconWidth, (int) iconHeight,null);
+        }
     }
 
     private void renderRestore(CustomVitalBarsConfig config, Graphics2D graphics, FullnessDirection dir, int x, int y, int width, int height)

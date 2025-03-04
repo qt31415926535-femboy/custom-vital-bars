@@ -1,6 +1,7 @@
 package net.runelite.client.plugins.customvitalbars;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 
 import lombok.Getter;
@@ -9,12 +10,17 @@ import net.runelite.api.events.*;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.game.AlternateSprites;
+import net.runelite.client.game.SkillIconManager;
+import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.itemstats.Effect;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 import net.runelite.client.plugins.itemstats.StatChange;
+import net.runelite.client.plugins.statusbars.Viewport;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.util.ImageUtil;
 
 public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
 
@@ -47,12 +53,14 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
     private long deltaTime;
     private long lastTime;
 
+    private final SkillIconManager skillIconManager;
+    private final SpriteManager spriteManager;
+    private final Image heartDisease;
+    private final Image heartPoison;
+    private final Image heartVenom;
+
     @Inject
-    CustomVitalBarsHitpointsOverlay(
-            Client client,
-            CustomVitalBarsPlugin plugin,
-            CustomVitalBarsConfig config,
-            ItemStatChangesService itemstatservice)
+    CustomVitalBarsHitpointsOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager)
     {
         super(plugin);
 
@@ -66,7 +74,13 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
         this.client = client;
         this.plugin = plugin;
         this.config = config;
+        this.skillIconManager = skillIconManager;
+        this.spriteManager = spriteManager;
         this.itemStatService = itemstatservice;
+
+        heartDisease = ImageUtil.loadImageResource(AlternateSprites.class, AlternateSprites.DISEASE_HEART);
+        heartPoison = ImageUtil.loadImageResource(AlternateSprites.class, AlternateSprites.POISON_HEART);
+        heartVenom = ImageUtil.loadImageResource(AlternateSprites.class, AlternateSprites.VENOM_HEART);
 
         initRenderer();
     }
@@ -104,7 +118,28 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
                     return HEALTH_COLOR;
                 },
                 () -> HEAL_COLOR,
-                () -> hitpointsRegenerationPercentage
+                () -> hitpointsRegenerationPercentage,
+                () ->
+                {
+                    final int poisonState = client.getVarpValue(VarPlayer.POISON);
+
+                    if (poisonState > 0 && poisonState < 50)
+                    {
+                        return heartPoison;
+                    }
+
+                    if (poisonState >= 1000000)
+                    {
+                        return heartVenom;
+                    }
+
+                    if (client.getVarpValue(VarPlayer.DISEASE_VALUE) > 0)
+                    {
+                        return heartDisease;
+                    }
+
+                    return loadSprite(SpriteID.MINIMAP_ORB_HITPOINTS_ICON);
+                }
         );
     }
 
@@ -133,6 +168,24 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
         {
             // Show it going down
             hitpointsRegenerationPercentage = 1 - hitpointsRegenerationPercentage;
+        }
+
+        if ( config.hideWhenSidebarPanelClosed() ) {
+            net.runelite.client.plugins.statusbars.Viewport curViewport = null;
+            Widget curWidget = null;
+
+            for (net.runelite.client.plugins.statusbars.Viewport viewport : Viewport.values()) {
+                final Widget viewportWidget = client.getWidget(viewport.getViewport());
+                if (viewportWidget != null && !viewportWidget.isHidden()) {
+                    curViewport = viewport;
+                    curWidget = viewportWidget;
+                    break;
+                }
+            }
+
+            if (curViewport == null) {
+                return null;
+            }
         }
 
         if ( plugin.isBarsDisplayed() && config.renderHitpoints() && !uiElementsOpen )
@@ -238,5 +291,10 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
     public void onWidgetClosed( WidgetClosed widgetClosed )
     {
         uiElementsOpen = false;
+    }
+
+    private BufferedImage loadSprite(int spriteId)
+    {
+        return spriteManager.getSprite(spriteId, 0);
     }
 }

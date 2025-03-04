@@ -28,6 +28,7 @@
 package net.runelite.client.plugins.customvitalbars;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 
 import net.runelite.api.*;
@@ -37,9 +38,12 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStats;
+import net.runelite.client.game.SkillIconManager;
+import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.itemstats.Effect;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 import net.runelite.client.plugins.itemstats.StatChange;
+import net.runelite.client.plugins.statusbars.Viewport;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -76,15 +80,14 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
     private double elapsedPrayerTimeInTicks;
     private double prayerConsumptionRateOrRegeneration;
 
+    private final SkillIconManager skillIconManager;
+    private final SpriteManager spriteManager;
+
     @Inject
     private ItemManager itemManager;
 
     @Inject
-    CustomVitalBarsPrayerOverlay(
-            Client client,
-            CustomVitalBarsPlugin plugin,
-            CustomVitalBarsConfig config,
-            ItemStatChangesService itemstatservice)
+    CustomVitalBarsPrayerOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager)
     {
         super(plugin);
 
@@ -97,6 +100,8 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
         this.client = client;
         this.plugin = plugin;
         this.config = config;
+        this.skillIconManager = skillIconManager;
+        this.spriteManager = spriteManager;
         this.itemStatService = itemstatservice;
 
         initRenderer();
@@ -123,7 +128,8 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
                     return prayerColor;
                 },
                 () -> PRAYER_HEAL_COLOR,
-                () -> prayerConsumptionRateOrRegeneration
+                () -> prayerConsumptionRateOrRegeneration,
+                () -> skillIconManager.getSkillImage(Skill.PRAYER, true)
         );
     }
 
@@ -149,6 +155,24 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
             elapsedPrayerTimeInMilliseconds = (elapsedPrayerTimeInMilliseconds + deltaTime) % PRAYER_REGENERATION_INTERVAL_MILLISECONDS;
 
             prayerConsumptionRateOrRegeneration = (double)elapsedPrayerTimeInMilliseconds / PRAYER_REGENERATION_INTERVAL_MILLISECONDS;
+        }
+
+        if ( config.hideWhenSidebarPanelClosed() ) {
+            net.runelite.client.plugins.statusbars.Viewport curViewport = null;
+            Widget curWidget = null;
+
+            for (net.runelite.client.plugins.statusbars.Viewport viewport : Viewport.values()) {
+                final Widget viewportWidget = client.getWidget(viewport.getViewport());
+                if (viewportWidget != null && !viewportWidget.isHidden()) {
+                    curViewport = viewport;
+                    curWidget = viewportWidget;
+                    break;
+                }
+            }
+
+            if (curViewport == null) {
+                return null;
+            }
         }
 
         if ( plugin.isBarsDisplayed() && config.renderPrayer() && !uiElementsOpen )
@@ -322,5 +346,10 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
         // https://oldschool.runescape.wiki/w/Prayer#Prayer_drain_mechanics
         int drainResistance = 2 * prayerBonus + 60;
         return 1000 * 0.6d * (double)drainResistance / drainEffect;
+    }
+
+    private BufferedImage loadSprite(int spriteId)
+    {
+        return spriteManager.getSprite(spriteId, 0);
     }
 }

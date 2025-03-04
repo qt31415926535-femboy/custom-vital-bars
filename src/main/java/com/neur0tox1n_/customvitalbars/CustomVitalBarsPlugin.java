@@ -43,6 +43,8 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemVariationMapping;
+import net.runelite.client.game.SkillIconManager;
+import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -50,6 +52,7 @@ import net.runelite.client.plugins.itemstats.ItemStatPlugin;
 import net.runelite.client.ui.overlay.OverlayManager;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -71,6 +74,8 @@ public class CustomVitalBarsPlugin extends Plugin
 	private CustomVitalBarsEnergyOverlay energyOverlay;
 	@Inject
 	private CustomVitalBarsSpecialOverlay specialOverlay;
+	@Inject
+	private CustomVitalBarsWarmthOverlay warmthOverlay;
 
 	@Inject
 	private OverlayManager overlayManager;
@@ -150,6 +155,7 @@ public class CustomVitalBarsPlugin extends Plugin
 		specialOverlay.onGameTick( gameTick );
 		prayerOverlay.onGameTick( gameTick );
 		energyOverlay.onGameTick( gameTick );
+		warmthOverlay.onGameTick( gameTick );
 	}
 
 	@Subscribe
@@ -164,7 +170,7 @@ public class CustomVitalBarsPlugin extends Plugin
 	@Subscribe
 	public void onWidgetLoaded( WidgetLoaded widgetLoaded )
 	{
-		if ( hideWhenBigUIOpen )
+		if ( !hideWhenBigUIOpen )
 		{
 			return;
 		}
@@ -200,6 +206,7 @@ public class CustomVitalBarsPlugin extends Plugin
 			prayerOverlay.onWidgetLoaded(widgetLoaded);
 			energyOverlay.onWidgetLoaded(widgetLoaded);
 			specialOverlay.onWidgetLoaded(widgetLoaded);
+			warmthOverlay.onWidgetLoaded(widgetLoaded);
 		}
 	}
 
@@ -210,6 +217,7 @@ public class CustomVitalBarsPlugin extends Plugin
 		prayerOverlay.onWidgetClosed( widgetClosed );
 		energyOverlay.onWidgetClosed( widgetClosed );
 		specialOverlay.onWidgetClosed( widgetClosed );
+		warmthOverlay.onWidgetClosed( widgetClosed );
 	}
 
 	private void checkCustomVitalBars()
@@ -238,3 +246,4 @@ public class CustomVitalBarsPlugin extends Plugin
 		}
 	}
 }
+

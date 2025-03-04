@@ -1,13 +1,18 @@
 package net.runelite.client.plugins.customvitalbars;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 
 import lombok.Getter;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.game.SkillIconManager;
+import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
+import net.runelite.client.plugins.statusbars.Viewport;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -40,12 +45,11 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
     private long deltaTime;
     private long lastTime;
 
+    private final SkillIconManager skillIconManager;
+    private final SpriteManager spriteManager;
+
     @Inject
-    CustomVitalBarsSpecialOverlay(
-            Client client,
-            CustomVitalBarsPlugin plugin,
-			CustomVitalBarsConfig config,
-            ItemStatChangesService itemstatservice)
+    CustomVitalBarsSpecialOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager)
     {
         super(plugin);
 
@@ -58,6 +62,8 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
         this.client = client;
         this.plugin = plugin;
         this.config = config;
+        this.skillIconManager = skillIconManager;
+        this.spriteManager = spriteManager;
         this.itemStatService = itemstatservice;
 
         initRenderer();
@@ -71,7 +77,8 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
                 () -> 0,
                 () -> SPECIAL_ATTACK_COLOR,
                 () -> SPECIAL_ATTACK_COLOR,
-                () -> specialPercentage
+                () -> specialPercentage,
+                () -> loadSprite(SpriteID.MINIMAP_ORB_SPECIAL_ICON)
         );
     }
 
@@ -93,6 +100,24 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
 
             millisecondsSinceSpecRegen = (long)((millisecondsSinceSpecRegen + deltaTime) % millisecondsPerSpecRegen);
             specialPercentage = millisecondsSinceSpecRegen / millisecondsPerSpecRegen;
+        }
+
+        if ( config.hideWhenSidebarPanelClosed() ) {
+            net.runelite.client.plugins.statusbars.Viewport curViewport = null;
+            Widget curWidget = null;
+
+            for (net.runelite.client.plugins.statusbars.Viewport viewport : Viewport.values()) {
+                final Widget viewportWidget = client.getWidget(viewport.getViewport());
+                if (viewportWidget != null && !viewportWidget.isHidden()) {
+                    curViewport = viewport;
+                    curWidget = viewportWidget;
+                    break;
+                }
+            }
+
+            if (curViewport == null) {
+                return null;
+            }
         }
 
         if ( plugin.isBarsDisplayed() && config.renderSpecial() && !uiElementsOpen )
@@ -160,5 +185,10 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
     public void onWidgetClosed( WidgetClosed widgetClosed )
     {
         uiElementsOpen = false;
+    }
+
+    private BufferedImage loadSprite(int spriteId)
+    {
+        return spriteManager.getSprite(spriteId, 0);
     }
 }
