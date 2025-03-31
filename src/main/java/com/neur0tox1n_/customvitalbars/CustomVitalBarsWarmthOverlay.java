@@ -25,15 +25,11 @@
  */
 package net.runelite.client.plugins.customvitalbars;
 
-import com.google.common.collect.ImmutableSet;
-import lombok.Getter;
 import net.runelite.api.*;
-import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.game.ItemVariationMapping;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.itemstats.Effect;
@@ -43,23 +39,17 @@ import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayPriority;
-import net.runelite.client.util.RSTimeUnit;
 
 import javax.inject.Inject;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.function.IntPredicate;
-import java.util.function.IntUnaryOperator;
-
-import static net.runelite.api.ItemID.*;
 
 public class CustomVitalBarsWarmthOverlay extends OverlayPanel
 {
     // love to StatusBars
     private static final Color WARMTH_COLOUR = new Color(244, 97, 0);
+
+    private static final int WINTERTODT_REGION = 6462;
 
     private final Client client;
 
@@ -72,6 +62,14 @@ public class CustomVitalBarsWarmthOverlay extends OverlayPanel
     private CustomVitalBarsComponent barRenderer;
 
     private boolean uiElementsOpen = false;
+    private boolean isWearingHPCape = false;
+    private boolean isWearingRegenBracelet = false;
+
+    private static final int NORMAL_WARMTH_REGEN_TICKS = 100;
+
+    private double warmthRegenerationPercentage;
+    private int ticksSinceWarmthRegen;
+    private long millisecondsSinceWarmthRegen;
 
     private long deltaTime;
     private long lastTime;
@@ -109,7 +107,7 @@ public class CustomVitalBarsWarmthOverlay extends OverlayPanel
                 () -> 0,
                 () -> WARMTH_COLOUR,
                 () -> null,
-                () -> 0d,
+                () -> warmthRegenerationPercentage,
                 () -> skillIconManager.getSkillImage(Skill.FIREMAKING, true)
         );
     }
@@ -119,6 +117,18 @@ public class CustomVitalBarsWarmthOverlay extends OverlayPanel
     {
         deltaTime = java.time.Instant.now().toEpochMilli() - lastTime;
         lastTime = java.time.Instant.now().toEpochMilli();
+
+        long millisecondsPerWarmthRegen = (long)(getTicksPerWarmthRegen() * 0.6 * 1000);
+
+        millisecondsSinceWarmthRegen = (millisecondsSinceWarmthRegen + deltaTime) % millisecondsPerWarmthRegen;
+        warmthRegenerationPercentage = millisecondsSinceWarmthRegen / (double) millisecondsPerWarmthRegen;
+
+        int currentWarmth = client.getVarbitValue(Varbits.WINTERTODT_WARMTH) / 10;
+        int maxWarmth = 100;
+        if ( currentWarmth == maxWarmth && config.warmthOutlineProgressThreshold() == OutlineProgressThreshold.RELATED_STAT_AT_MAX )
+        {
+            warmthRegenerationPercentage = 0;
+        }
 
         if ( config.hideWhenSidebarPanelClosed() ) {
             Viewport curViewport = null;
@@ -138,10 +148,10 @@ public class CustomVitalBarsWarmthOverlay extends OverlayPanel
             }
         }
 
-        if ( plugin.isBarsDisplayed() && config.renderEnergy() && !uiElementsOpen )
+        if ( ((config.warmthWintertodtDynamicOverride() && isInWintertodtRegion()) || config.renderWarmth()) && plugin.isBarsDisplayed() && !uiElementsOpen )
         {
-            barRenderer.renderBar( config, g, panelComponent, Vital.RUN_ENERGY );
-            return config.energySize();
+            barRenderer.renderBar( config, g, panelComponent, Vital.WARMTH, false );
+            return config.warmthSize();
         }
 
         return null;
@@ -194,12 +204,86 @@ public class CustomVitalBarsWarmthOverlay extends OverlayPanel
     }
 
     @Subscribe
+    public void onItemContainerChanged(ItemContainerChanged event)
+    {
+        if (event.getContainerId() != InventoryID.EQUIPMENT.getId())
+        {
+            return;
+        }
+
+        ItemContainer equipment = event.getItemContainer();
+        final boolean hasHPCape = (equipment.contains(ItemID.HITPOINTS_CAPE) || equipment.contains(ItemID.HITPOINTS_CAPET));
+        final boolean hasRegenBracelet = equipment.contains(ItemID.REGEN_BRACELET);
+
+        if ( hasHPCape != isWearingHPCape )
+        {
+            ticksSinceWarmthRegen = 0;
+            millisecondsSinceWarmthRegen = 0;
+            isWearingHPCape = hasHPCape;
+        }
+        if ( hasRegenBracelet != isWearingRegenBracelet )
+        {
+            ticksSinceWarmthRegen = 0;
+            millisecondsSinceWarmthRegen = 0;
+            isWearingRegenBracelet = hasRegenBracelet;
+        }
+    }
+
+    @Subscribe
     public void onGameTick(GameTick event)
     {
+        int ticksPerWarmthRegen = getTicksPerWarmthRegen();
+
+        ticksSinceWarmthRegen = (ticksSinceWarmthRegen + 1) % ticksPerWarmthRegen;
+        millisecondsSinceWarmthRegen = (long) (ticksSinceWarmthRegen * 0.6 * 1000);
+        warmthRegenerationPercentage = ticksSinceWarmthRegen / (double) ticksPerWarmthRegen;
+
+        int currentWarmth = client.getVarbitValue(Varbits.WINTERTODT_WARMTH) / 10;
+        int maxWarmth = 100;
+        if ( currentWarmth == maxWarmth && config.warmthOutlineProgressThreshold() == OutlineProgressThreshold.RELATED_STAT_AT_MAX )
+        {
+            warmthRegenerationPercentage = 0;
+        }
     }
+
+    @Subscribe
+    public void onVarbitChanged(VarbitChanged ev)
+    {
+        if (ev.getVarbitId() == Varbits.PRAYER_RAPID_HEAL)
+        {
+            ticksSinceWarmthRegen = 0;
+            millisecondsSinceWarmthRegen = 0;
+        }
+    }
+
 
     private BufferedImage loadSprite(int spriteId)
     {
         return spriteManager.getSprite(spriteId, 0);
+    }
+
+    private int getTicksPerWarmthRegen()
+    {
+        int ticksPerWarmthRegen = NORMAL_WARMTH_REGEN_TICKS;
+        if ( client.isPrayerActive( Prayer.RAPID_HEAL ) || isWearingHPCape )
+        {
+            ticksPerWarmthRegen /= 2;
+        }
+        if ( isWearingRegenBracelet )
+        {
+            ticksPerWarmthRegen /= 2;
+        }
+
+        return ticksPerWarmthRegen;
+    }
+
+    private boolean isInWintertodtRegion()
+    {
+        if (client.getLocalPlayer() != null)
+        {
+            return client.getLocalPlayer().getWorldLocation().getRegionID() == WINTERTODT_REGION;
+        }
+
+        return false;
     }
 }

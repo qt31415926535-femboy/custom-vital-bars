@@ -138,7 +138,7 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
         deltaTime = java.time.Instant.now().toEpochMilli() - lastTime;
         lastTime = java.time.Instant.now().toEpochMilli();
 
-        if ( !regenPotionEffectActive )
+        if ( !regenPotionEffectActive || (config.prayerOutlineProgressSelection() == OutlineProgressSelection.SHOW_NATURAL_PROGRESS_ONLY) )
         {
             double prayerTimeCost = getCurrentPrayerTimeCost();
             if (prayerTimeCost == -1) {
@@ -176,7 +176,7 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
 
         if ( plugin.isBarsDisplayed() && config.renderPrayer() && !uiElementsOpen )
         {
-            barRenderer.renderBar( config, g, panelComponent, Vital.PRAYER );
+            barRenderer.renderBar( config, g, panelComponent, Vital.PRAYER, regenPotionEffectActive );
 
             return config.prayerSize();
         }
@@ -235,7 +235,7 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
 
     public void onGameTick( GameTick gameTick )
     {
-        if ( !regenPotionEffectActive )
+        if ( !regenPotionEffectActive || (config.prayerOutlineProgressSelection() == OutlineProgressSelection.SHOW_NATURAL_PROGRESS_ONLY) )
         {
             if ( isAnyPrayerActive() )
             {

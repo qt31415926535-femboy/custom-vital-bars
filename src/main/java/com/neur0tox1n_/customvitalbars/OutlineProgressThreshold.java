@@ -8,8 +8,7 @@ import lombok.Getter;
 public enum OutlineProgressThreshold
 {
     RELATED_STAT_AT_MAX("Related stat = max"),
-    ALWAYS_ON("Always progresses"),
-    ALWAYS_OFF("Always disabled");
+    NO_THRESHOLD("Always progresses");
 
     private final String name;
 

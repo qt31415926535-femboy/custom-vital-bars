@@ -121,7 +121,7 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
 
         if ( plugin.isBarsDisplayed() && config.renderSpecial() && !uiElementsOpen )
         {
-            barRenderer.renderBar( config, g, panelComponent, Vital.SPECIAL_ENERGY );
+            barRenderer.renderBar( config, g, panelComponent, Vital.SPECIAL_ENERGY, false );
 
             return config.specialSize();
         }

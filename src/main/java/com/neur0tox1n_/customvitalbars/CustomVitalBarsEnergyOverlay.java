@@ -29,6 +29,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
@@ -42,6 +44,7 @@ import net.runelite.api.events.*;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.InterfaceID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemVariationMapping;
 import net.runelite.client.game.SkillIconManager;
@@ -54,6 +57,7 @@ import net.runelite.client.util.RSTimeUnit;
 
 import static net.runelite.api.ItemID.*;
 import static net.runelite.api.ItemID.MAX_CAPE;
+import static net.runelite.client.plugins.customvitalbars.GameTimer.STAMINA;
 
 public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 {
@@ -95,6 +99,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
     private final Color RUN_STAMINA_COLOR = new Color(160, 124, 72, 255);
     private final Color ENERGY_COLOR = new Color(199, 174, 0, 220);
     private final int MAX_RUN_ENERGY_VALUE = 100;
+    private final int STAMINA_DURATION_TICKS = 200;
 
     private final Client client;
 
@@ -108,27 +113,34 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 
     private boolean uiElementsOpen = false;
 
-    private double staminaDurationRemainingOrRegeneration = 0;
+    private double staminaDurationRemainingPercentage = 0;
+    private double runEnergyRegenerationPercentage = 0;
 
+    private int lastStaminaEffectActive = 0;
     private int staminaEffectActive = 0;
 
-    private int ticksSinceRunEnergyRegen = 0;
-
     private int nextHighestRunEnergyMark = 0;
+    private int ticksSinceRunEnergyRegen = 0;
     private int ticksToRunEnergyRegen;
     private long millisecondsToRunEnergyRegen;
+    private long millisecondsSinceRunEnergyRegen;
+
+    private long millisecondsSinceStaminaPotionDrink;
+    private long ticksSinceStaminaPotionDrink;
 
     private boolean localPlayerRunningToDestination = false;
     private boolean lastLocalPlayerRunningToDestination = false;
     private boolean regenAlreadyStarted = false;
 
-    private int lastLocalPlayerRunEnergy = 0;
+    private int baseStaminaDurationTicks = STAMINA_DURATION_TICKS;
+    private int maxStaminaTicks = STAMINA_DURATION_TICKS;
 
     private WorldPoint prevLocalPlayerLocation;
 
-    private long millisecondsSinceRunEnergyRegen;
     private long deltaTime;
     private long lastTime;
+
+    private final Map<GameTimer, TimerTimer> varTimers = new EnumMap<>(GameTimer.class);
 
     private final SkillIconManager skillIconManager;
     private final SpriteManager spriteManager;
@@ -163,7 +175,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
                 () -> getRestoreValue("Run Energy"),
                 () ->
                 {
-                    if (client.getVarbitValue(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) != 0)
+                    if ( client.getVarbitValue(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) != 0 )
                     {
                         return RUN_STAMINA_COLOR;
                     }
@@ -173,7 +185,19 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
                     }
                 },
                 () -> ENERGY_HEAL_COLOR,
-                () -> staminaDurationRemainingOrRegeneration,
+                () ->
+                {
+                    if ( config.energyOutlineProgressSelection() == OutlineProgressSelection.SHOW_NATURAL_PROGRESS_ONLY )
+                    {
+                        return runEnergyRegenerationPercentage;
+                    }
+                    else if ( config.energyOutlineProgressSelection() == OutlineProgressSelection.SHOW_CONSUMABLE_PROGRESS_ONLY )
+                    {
+                        return staminaDurationRemainingPercentage;
+                    }
+
+                    return ((staminaEffectActive == 1) ? staminaDurationRemainingPercentage : runEnergyRegenerationPercentage);
+                },
                 () -> loadSprite(SpriteID.MINIMAP_ORB_WALK_ICON)
         );
     }
@@ -184,42 +208,50 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
         deltaTime = java.time.Instant.now().toEpochMilli() - lastTime;
         lastTime = java.time.Instant.now().toEpochMilli();
 
-        if ( client.getVarbitValue(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) == 0 )
+        if ( !localPlayerRunningToDestination )
         {
-            if ( !localPlayerRunningToDestination )
+            if ( client.getEnergy() == MAX_RUN_ENERGY_VALUE * 100 )
             {
-                if ( client.getEnergy() == MAX_RUN_ENERGY_VALUE * 100 )
+                nextHighestRunEnergyMark = 0;
+                if ( config.energyOutlineProgressThreshold() == OutlineProgressThreshold.RELATED_STAT_AT_MAX )
                 {
-                    nextHighestRunEnergyMark = 0;
-                    if (config.energyOutlineProgressThreshold() == OutlineProgressThreshold.RELATED_STAT_AT_MAX)
-                    {
-                        staminaDurationRemainingOrRegeneration = 0;
-                    }
+                    runEnergyRegenerationPercentage = 0;
                 }
-                else if ( client.getEnergy() >= nextHighestRunEnergyMark )
-                {
-                    int rawRunEnergyRegenPerTick = (int)Math.floor( (1 + (getGracefulRecoveryBoost() / 100.0d)) * (Math.floor( client.getBoostedSkillLevel( Skill.AGILITY ) / 10.0d ) + 15));
+            }
+            else if ( client.getEnergy() >= nextHighestRunEnergyMark )
+            {
+                int rawRunEnergyRegenPerTick = (int)Math.floor( (1 + (getGracefulRecoveryBoost() / 100.0d)) * (Math.floor( client.getBoostedSkillLevel( Skill.AGILITY ) / 10.0d ) + 15));
 
-                    nextHighestRunEnergyMark = ((client.getEnergy() + 99) / 100) * 100;
+                nextHighestRunEnergyMark = ((client.getEnergy() + 99) / 100) * 100;
 
-                    ticksToRunEnergyRegen = (int) (Math.ceil((nextHighestRunEnergyMark - client.getEnergy()) / (double) rawRunEnergyRegenPerTick));
-                    millisecondsToRunEnergyRegen = (long)(ticksToRunEnergyRegen * 0.6 * 1000);
+                ticksToRunEnergyRegen = (int) (Math.ceil((nextHighestRunEnergyMark - client.getEnergy()) / (double) rawRunEnergyRegenPerTick));
+                millisecondsToRunEnergyRegen = (long)(ticksToRunEnergyRegen * 0.6 * 1000);
 
+                millisecondsSinceRunEnergyRegen = 0;
+                ticksSinceRunEnergyRegen = 0;
+                runEnergyRegenerationPercentage = 0;
+            }
+            else {
+                if (millisecondsToRunEnergyRegen > 0) {
+                    millisecondsSinceRunEnergyRegen = (millisecondsSinceRunEnergyRegen + deltaTime) % millisecondsToRunEnergyRegen;
+                    runEnergyRegenerationPercentage = millisecondsSinceRunEnergyRegen / (double) millisecondsToRunEnergyRegen;
+                } else {
                     millisecondsSinceRunEnergyRegen = 0;
-                    ticksSinceRunEnergyRegen = 0;
-                    staminaDurationRemainingOrRegeneration = 0;
-                }
-                else {
-                    if (millisecondsToRunEnergyRegen > 0) {
-                        millisecondsSinceRunEnergyRegen = (millisecondsSinceRunEnergyRegen + deltaTime) % millisecondsToRunEnergyRegen;
-                        staminaDurationRemainingOrRegeneration = millisecondsSinceRunEnergyRegen / (double) millisecondsToRunEnergyRegen;
-                    } else {
-                        millisecondsSinceRunEnergyRegen = 0;
-                        staminaDurationRemainingOrRegeneration = 0;
-                    }
+                    runEnergyRegenerationPercentage = 0;
                 }
             }
         }
+
+        /*
+        if ( staminaEffectActive == 1 )
+        {
+            long millisecondsToStaminaPotionExpire = (long)(baseStaminaDurationTicks * 0.6 * 1000);
+
+            millisecondsSinceStaminaPotionDrink = (millisecondsSinceStaminaPotionDrink + deltaTime) % millisecondsToStaminaPotionExpire;
+            staminaDurationRemainingPercentage = 1 - ((double) millisecondsSinceStaminaPotionDrink / millisecondsToStaminaPotionExpire);
+        }
+
+         */
 
         if ( config.hideWhenSidebarPanelClosed() ) {
             Viewport curViewport = null;
@@ -241,7 +273,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 
         if ( plugin.isBarsDisplayed() && config.renderEnergy() && !uiElementsOpen )
         {
-            barRenderer.renderBar( config, g, panelComponent, Vital.RUN_ENERGY );
+            barRenderer.renderBar( config, g, panelComponent, Vital.RUN_ENERGY, (staminaEffectActive == 1) );
             return config.energySize();
         }
 
@@ -289,6 +321,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
                 || event.getVarbitId() == Varbits.RING_OF_ENDURANCE_EFFECT)
         {
             // staminaEffectActive is checked to match https://github.com/Joshua-F/cs2-scripts/blob/741271f0c3395048c1bad4af7881a13734516adf/scripts/%5Bproc%2Cbuff_bar_get_value%5D.cs2#L25
+            lastStaminaEffectActive = staminaEffectActive;
             staminaEffectActive = client.getVarbitValue(Varbits.RUN_SLOWED_DEPLETION_ACTIVE);
             int staminaPotionEffectVarb = client.getVarbitValue(Varbits.STAMINA_EFFECT);
             int enduranceRingEffectVarb = client.getVarbitValue(Varbits.RING_OF_ENDURANCE_EFFECT);
@@ -296,7 +329,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
             final int totalStaminaEffect = staminaPotionEffectVarb + enduranceRingEffectVarb;
             if ( staminaEffectActive == 1 )
             {
-                updateStaminaTimer( totalStaminaEffect, i -> i * 10 );
+                updateVarTimer( STAMINA, totalStaminaEffect, i -> i * 10 );
             }
         }
     }
@@ -322,85 +355,62 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
         uiElementsOpen = false;
     }
 
-    private void updateStaminaTimer( final int varValue, final IntUnaryOperator tickDuration )
-    {
-        updateStaminaTimer( varValue, i -> i == 0, tickDuration );
-    }
-
-    private void updateStaminaTimer( final int varValue, final IntPredicate removeTimerCheck, final IntUnaryOperator tickDuration )
-    {
-        int ticks = tickDuration.applyAsInt(varValue);
-        final Duration duration = Duration.of(ticks, RSTimeUnit.GAME_TICKS);
-        staminaDurationRemainingOrRegeneration = duration.getSeconds();
-    }
-
     @Subscribe
-    public void onGameTick(GameTick event)
-    {
-        if ( client.getVarbitValue(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) == 0 )
-        {
-            lastLocalPlayerRunningToDestination = localPlayerRunningToDestination;
-            localPlayerRunningToDestination =
-                    prevLocalPlayerLocation != null &&
-                            client.getLocalDestinationLocation() != null &&
-                            prevLocalPlayerLocation.distanceTo(client.getLocalPlayer().getWorldLocation()) > 1;
-            prevLocalPlayerLocation = client.getLocalPlayer().getWorldLocation();
+    public void onGameTick(GameTick event) {
+        lastLocalPlayerRunningToDestination = localPlayerRunningToDestination;
+        localPlayerRunningToDestination =
+                prevLocalPlayerLocation != null &&
+                        client.getLocalDestinationLocation() != null &&
+                        prevLocalPlayerLocation.distanceTo(client.getLocalPlayer().getWorldLocation()) > 1;
+        prevLocalPlayerLocation = client.getLocalPlayer().getWorldLocation();
 
-            if ( !localPlayerRunningToDestination && !lastLocalPlayerRunningToDestination && !regenAlreadyStarted )
-            {
-                ticksSinceRunEnergyRegen = 0;
-                millisecondsSinceRunEnergyRegen = 0;
-                staminaDurationRemainingOrRegeneration = 0;
+        if (!localPlayerRunningToDestination && !lastLocalPlayerRunningToDestination && !regenAlreadyStarted) {
+            ticksSinceRunEnergyRegen = 0;
+            millisecondsSinceRunEnergyRegen = 0;
+            runEnergyRegenerationPercentage = 0;
 
-                regenAlreadyStarted = true;
-            }
+            regenAlreadyStarted = true;
+        }
 
-            if ( localPlayerRunningToDestination )
-            {
-                ticksSinceRunEnergyRegen = 0;
-                millisecondsSinceRunEnergyRegen = 0;
-                staminaDurationRemainingOrRegeneration = 0;
+        if (localPlayerRunningToDestination) {
+            ticksSinceRunEnergyRegen = 0;
+            millisecondsSinceRunEnergyRegen = 0;
+            runEnergyRegenerationPercentage = 0;
 
-                regenAlreadyStarted = false;
-            }
-            else
-            {
-                int currentRunEnergy = client.getEnergy();
-                if ( currentRunEnergy == MAX_RUN_ENERGY_VALUE * 100 )
-                {
-                    nextHighestRunEnergyMark = 0;
-                    if (config.energyOutlineProgressThreshold() == OutlineProgressThreshold.RELATED_STAT_AT_MAX)
-                    {
-                        staminaDurationRemainingOrRegeneration = 0;
-                    }
+            regenAlreadyStarted = false;
+        } else {
+            int currentRunEnergy = client.getEnergy();
+            if (currentRunEnergy == MAX_RUN_ENERGY_VALUE * 100) {
+                nextHighestRunEnergyMark = 0;
+                if (config.energyOutlineProgressThreshold() == OutlineProgressThreshold.RELATED_STAT_AT_MAX) {
+                    runEnergyRegenerationPercentage = 0;
                 }
-                if ( currentRunEnergy >= nextHighestRunEnergyMark )
-                {
-                    int rawRunEnergyRegenPerTick = (int) Math.floor((1 + (getGracefulRecoveryBoost() / 100.0d)) * (Math.floor(client.getBoostedSkillLevel(Skill.AGILITY) / 10.0d ) + 15));
+            }
+            if (currentRunEnergy >= nextHighestRunEnergyMark) {
+                int rawRunEnergyRegenPerTick = (int) Math.floor((1 + (getGracefulRecoveryBoost() / 100.0d)) * (Math.floor(client.getBoostedSkillLevel(Skill.AGILITY) / 10.0d) + 15));
 
-                    nextHighestRunEnergyMark = ((currentRunEnergy + 99) / 100) * 100;
+                nextHighestRunEnergyMark = ((currentRunEnergy + 99) / 100) * 100;
 
-                    ticksToRunEnergyRegen = (int)(Math.ceil((nextHighestRunEnergyMark - currentRunEnergy) / (double) rawRunEnergyRegenPerTick));
-                    millisecondsToRunEnergyRegen = (long)(ticksToRunEnergyRegen * 0.6 * 1000);
+                ticksToRunEnergyRegen = (int) (Math.ceil((nextHighestRunEnergyMark - currentRunEnergy) / (double) rawRunEnergyRegenPerTick));
+                millisecondsToRunEnergyRegen = (long) (ticksToRunEnergyRegen * 0.6 * 1000);
 
+                ticksSinceRunEnergyRegen = 0;
+                millisecondsSinceRunEnergyRegen = 0;
+                runEnergyRegenerationPercentage = 0;
+            } else {
+                if (ticksToRunEnergyRegen > 0) {
+                    ticksSinceRunEnergyRegen = (ticksSinceRunEnergyRegen + 1) % ticksToRunEnergyRegen;
+                    millisecondsSinceRunEnergyRegen = (long) (ticksSinceRunEnergyRegen * 0.6 * 1000);
+                    runEnergyRegenerationPercentage = ticksSinceRunEnergyRegen / (double) ticksToRunEnergyRegen;
+                } else {
                     ticksSinceRunEnergyRegen = 0;
                     millisecondsSinceRunEnergyRegen = 0;
-                    staminaDurationRemainingOrRegeneration = 0;
-                }
-                else {
-                    if (ticksToRunEnergyRegen > 0) {
-                        ticksSinceRunEnergyRegen = (ticksSinceRunEnergyRegen + 1) % ticksToRunEnergyRegen;
-                        millisecondsSinceRunEnergyRegen = (long) (ticksSinceRunEnergyRegen * 0.6 * 1000);
-                        staminaDurationRemainingOrRegeneration = ticksSinceRunEnergyRegen / (double) ticksToRunEnergyRegen;
-                    } else {
-                        ticksSinceRunEnergyRegen = 0;
-                        millisecondsSinceRunEnergyRegen = 0;
-                        staminaDurationRemainingOrRegeneration = 0;
-                    }
+                    runEnergyRegenerationPercentage = 0;
                 }
             }
         }
     }
+
 
     private int getGracefulRecoveryBoost()
     {
@@ -441,5 +451,48 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
     private BufferedImage loadSprite(int spriteId)
     {
         return spriteManager.getSprite(spriteId, 0);
+    }
+
+    private void updateVarTimer( final GameTimer gameTimer, final int varValue, final IntUnaryOperator tickDuration )
+    {
+        updateVarTimer( gameTimer, varValue, i -> i == 0, tickDuration);
+    }
+
+    private void updateVarTimer( final GameTimer gameTimer, final int varValue, final IntPredicate removeTimerCheck, final IntUnaryOperator tickDuration )
+    {
+        TimerTimer timer = varTimers.get(gameTimer);
+        int ticks = tickDuration.applyAsInt( varValue );
+        final Duration duration = Duration.of( ticks, RSTimeUnit.GAME_TICKS );
+
+        if ( removeTimerCheck.test( varValue ) )
+        {
+            removeVarTimer( gameTimer );
+            ticks = 0;
+        }
+        // Reset the timer when its duration increases in order to allow it to turn red at the correct time even when refreshed early
+        else if (timer == null || ticks > timer.ticks)
+        {
+            timer = createGameTimer(gameTimer, duration);
+            timer.ticks = ticks;
+            varTimers.put(gameTimer, timer);
+        }
+        else
+        {
+            timer.ticks = ticks;
+            timer.updateDuration(duration);
+        }
+
+        staminaDurationRemainingPercentage = (double) ticks / maxStaminaTicks;
+    }
+
+    private TimerTimer createGameTimer(final GameTimer timer, Duration duration)
+    {
+        TimerTimer t = new TimerTimer(timer, duration, plugin);
+        return t;
+    }
+
+    private void removeVarTimer( GameTimer gameTimer )
+    {
+        varTimers.remove( gameTimer );
     }
 }

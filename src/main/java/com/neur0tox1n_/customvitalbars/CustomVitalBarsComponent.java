@@ -36,6 +36,8 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 
 import net.runelite.api.Client;
+import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.Notification;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.components.TextComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
@@ -47,6 +49,9 @@ class CustomVitalBarsComponent
 {
     @Inject
     private Client client;
+
+    @Inject
+    private ConfigManager configManager;
 
     private static final Color BACKGROUND = new Color(0, 0, 0, 150);
     private static final Color OVERHEAL_COLOR = new Color(216, 255, 139, 150);
@@ -78,18 +83,20 @@ class CustomVitalBarsComponent
         currentValue = currentValueSupplier.get();
     }
 
-    void renderBar( CustomVitalBarsConfig config, Graphics2D graphics, PanelComponent component, Vital whichVital )
+    void renderBar( CustomVitalBarsConfig config, Graphics2D graphics, PanelComponent component, Vital whichVital, boolean isConsumableActive )
     {
         FullnessDirection dir = null;
         TextFormatting textFormat = null;
         PlacementDirection textLoc = null;
         int textOffsetX = 0, textOffsetY = 0;
         ThresholdGlowMode thresholdGlowMode = null;
+        OutlineProgressSelection selectionOutlineProgress = null;
         OutlineProgressThreshold thresholdOutlineProgress = null;
         int thresholdGlowValue = 0, outlineThickness = 0, width = 0, height = 0;
         double iconScale = 0d;
         PlacementDirection iconLoc = null;
         int iconOffsetX = 0, iconOffsetY = 0;
+        int initialX = 200, initialY = 200;
 
         if ( whichVital == Vital.HITPOINTS )
         {
@@ -99,6 +106,7 @@ class CustomVitalBarsComponent
             textOffsetX = config.hitpointsTextOffsetX();
             textOffsetY = config.hitpointsTextOffsetY();
             thresholdGlowMode = config.hitpointsGlowThresholdMode();
+            selectionOutlineProgress = config.hitpointsOutlineProgressSelection();
             thresholdOutlineProgress = config.hitpointsOutlineProgressThreshold();
             thresholdGlowValue = config.hitpointsGlowThresholdValue();
             outlineThickness = config.hitpointsOutlineThickness();
@@ -117,6 +125,7 @@ class CustomVitalBarsComponent
             textOffsetX = config.prayerTextOffsetX();
             textOffsetY = config.prayerTextOffsetY();
             thresholdGlowMode = config.prayerGlowThresholdMode();
+            selectionOutlineProgress = config.prayerOutlineProgressSelection();
             thresholdOutlineProgress = config.prayerOutlineProgressThreshold();
             thresholdGlowValue = config.prayerGlowThresholdValue();
             outlineThickness = config.prayerOutlineThickness();
@@ -135,6 +144,7 @@ class CustomVitalBarsComponent
             textOffsetX = config.energyTextOffsetX();
             textOffsetY = config.energyTextOffsetY();
             thresholdGlowMode = config.energyGlowThresholdMode();
+            selectionOutlineProgress = config.energyOutlineProgressSelection();
             thresholdOutlineProgress = config.energyOutlineProgressThreshold();
             thresholdGlowValue = config.energyGlowThresholdValue();
             outlineThickness = config.energyOutlineThickness();
@@ -153,6 +163,7 @@ class CustomVitalBarsComponent
             textOffsetX = config.specialTextOffsetX();
             textOffsetY = config.specialTextOffsetY();
             thresholdGlowMode = config.specialGlowThresholdMode();
+            selectionOutlineProgress = config.specialOutlineProgressSelection();
             thresholdOutlineProgress = config.specialOutlineProgressThreshold();
             thresholdGlowValue = config.specialGlowThresholdValue();
             outlineThickness = config.specialOutlineThickness();
@@ -163,19 +174,43 @@ class CustomVitalBarsComponent
             width = config.specialSize().width;
             height = config.specialSize().height;
         }
+        else if ( whichVital == Vital.WARMTH )
+        {
+            dir = config.warmthFullnessDirection();
+            textFormat = config.warmthTextFormat();
+            textLoc = config.warmthTextPosition();
+            textOffsetX = config.warmthTextOffsetX();
+            textOffsetY = config.warmthTextOffsetY();
+            thresholdGlowMode = config.warmthGlowThresholdMode();
+            selectionOutlineProgress = config.warmthOutlineProgressSelection();
+            thresholdOutlineProgress = config.warmthOutlineProgressThreshold();
+            thresholdGlowValue = config.warmthGlowThresholdValue();
+            outlineThickness = config.warmthOutlineThickness();
+            iconScale = config.warmthIconScale();
+            iconLoc = config.warmthIconPosition();
+            iconOffsetX = config.warmthIconOffsetX();
+            iconOffsetY = config.warmthIconOffsetY();
+            width = config.warmthSize().width;
+            height = config.warmthSize().height;
+        }
 
         if ( boundingBox == null )
         {
             boundingBox = new PanelComponent();
             component.getChildren().add( boundingBox );
         }
+        else
+        {
+            initialX = component.getBounds().x;
+            initialY = component.getBounds().y;
+        }
 
-        boundingBox.setBorder( new Rectangle( component.getBounds().x, component.getBounds().y, width, height ) );
+        boundingBox.setBorder( new Rectangle( initialX, initialY, width, height ) );
         boundingBox.setPreferredSize( new Dimension( width, height ) );
 
         if ( outlineThickness > 0 )
         {
-            renderOutline( config, graphics, component, dir, outlineThickness, thresholdOutlineProgress, width, height );
+            renderOutline( config, graphics, component, dir, outlineThickness, selectionOutlineProgress, thresholdOutlineProgress, width, height, isConsumableActive );
         }
 
         // start by assuming the bar will be filled rightward
@@ -277,12 +312,13 @@ class CustomVitalBarsComponent
         }
     }
 
-    private void renderOutline( CustomVitalBarsConfig config, Graphics2D graphics, PanelComponent component, FullnessDirection dir, int outlineSize, OutlineProgressThreshold thresholdOutlineProgress, int width, int height )
+    private void renderOutline( CustomVitalBarsConfig config, Graphics2D graphics, PanelComponent component, FullnessDirection dir, int outlineSize, OutlineProgressSelection selectionOutlineProgress, OutlineProgressThreshold thresholdOutlineProgress, int width, int height, boolean isConsumableActive )
     {
         graphics.setColor( BACKGROUND );
         graphics.drawRect( component.getBounds().x - outlineSize - 1, component.getBounds().y - outlineSize - 1, width + 2 * outlineSize + BORDER_SIZE + 1, height + 2 * outlineSize + BORDER_SIZE + 1 );
 
-        if ( thresholdOutlineProgress == OutlineProgressThreshold.ALWAYS_OFF )
+        if (    selectionOutlineProgress == OutlineProgressSelection.HIDE ||
+                (selectionOutlineProgress == OutlineProgressSelection.SHOW_CONSUMABLE_PROGRESS_ONLY && !isConsumableActive) )
         {
             return;
         }

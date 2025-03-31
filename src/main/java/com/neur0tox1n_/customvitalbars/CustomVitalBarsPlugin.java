@@ -50,6 +50,7 @@ import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.itemstats.ItemStatPlugin;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.Text;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.awt.image.BufferedImage;
@@ -61,7 +62,8 @@ import static net.runelite.api.ItemID.MAX_CAPE;
 
 @PluginDescriptor(
 	name = "Custom Vital Bars",
-	description = "Draws configurable bars showing HP, Prayer, special/run energy and their respective healing amounts"
+	description = "Draws configurable bars showing HP, Prayer, Run energy, Special energy, Warmth, and their respective restoration amounts",
+		tags = {"status","vital","vitals","custom","bar","health","hp","hitpoints","pray","run","energy","stamina","special","combat","regen","heal","warmth","wintertodt","Hunter","food","potion"}
 )
 @PluginDependency(ItemStatPlugin.class)
 public class CustomVitalBarsPlugin extends Plugin
@@ -105,6 +107,7 @@ public class CustomVitalBarsPlugin extends Plugin
 		overlayManager.add( prayerOverlay );
 		overlayManager.add( energyOverlay );
 		overlayManager.add( specialOverlay );
+		overlayManager.add( warmthOverlay );
 		hideWhenBigUIOpen = config.hideWhenLargeInterfacePanelsOpen();
 	}
 
@@ -115,6 +118,7 @@ public class CustomVitalBarsPlugin extends Plugin
 		overlayManager.remove( prayerOverlay );
 		overlayManager.remove( energyOverlay );
 		overlayManager.remove( specialOverlay );
+		overlayManager.remove( warmthOverlay );
 		barsDisplayed = false;
 	}
 
@@ -135,8 +139,10 @@ public class CustomVitalBarsPlugin extends Plugin
 	@Subscribe
 	public void onItemContainerChanged( ItemContainerChanged event )
 	{
+		healthOverlay.onItemContainerChanged( event );
 		specialOverlay.onItemContainerChanged( event );
 		prayerOverlay.onItemContainerChanged( event );
+		warmthOverlay.onItemContainerChanged( event );
 	}
 
 	@Subscribe
@@ -145,6 +151,7 @@ public class CustomVitalBarsPlugin extends Plugin
 		healthOverlay.onVarbitChanged( ev );
 		prayerOverlay.onVarbitChanged( ev );
 		energyOverlay.onVarbitChanged( ev );
+		warmthOverlay.onVarbitChanged( ev );
 	}
 
 	@Subscribe
@@ -218,6 +225,12 @@ public class CustomVitalBarsPlugin extends Plugin
 		energyOverlay.onWidgetClosed( widgetClosed );
 		specialOverlay.onWidgetClosed( widgetClosed );
 		warmthOverlay.onWidgetClosed( widgetClosed );
+	}
+
+	@Subscribe
+	public void onMenuOptionClicked( MenuOptionClicked event )
+	{
+		healthOverlay.onMenuOptionClicked( event );
 	}
 
 	private void checkCustomVitalBars()
