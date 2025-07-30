@@ -1,4 +1,4 @@
-package net.runelite.client.plugins.customvitalbars;
+package com.neur0tox1n_.customvitalbars;
 
 import net.runelite.client.config.*;
 import net.runelite.client.ui.overlay.components.ComponentConstants;

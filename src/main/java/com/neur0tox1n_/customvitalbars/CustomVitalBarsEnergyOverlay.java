@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.customvitalbars;
+package com.neur0tox1n_.customvitalbars;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -55,9 +55,9 @@ import net.runelite.client.plugins.itemstats.StatChange;
 import net.runelite.client.ui.overlay.*;
 import net.runelite.client.util.RSTimeUnit;
 
+import static com.neur0tox1n_.customvitalbars.GameTimer.STAMINA;
 import static net.runelite.api.ItemID.*;
 import static net.runelite.api.ItemID.MAX_CAPE;
-import static net.runelite.client.plugins.customvitalbars.GameTimer.STAMINA;
 
 public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 {
