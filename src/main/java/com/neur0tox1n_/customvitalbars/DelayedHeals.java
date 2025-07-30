@@ -1,6 +1,6 @@
 // huge shoutout to DapperMickie of DelayedHeals plugin
 
-package net.runelite.client.plugins.customvitalbars;
+package com.neur0tox1n_.customvitalbars;
 
 import java.util.HashMap;
 import java.util.Map;
