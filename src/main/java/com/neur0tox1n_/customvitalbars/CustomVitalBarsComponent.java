@@ -351,7 +351,7 @@ class CustomVitalBarsComponent
 
             Shape oldClip = graphics.getClip();
             graphics.setClip( getOutsideEdge( graphics, new Rectangle( component.getBounds().x - outlineSize, component.getBounds().y - outlineSize, width + 2 * outlineSize + BORDER_SIZE, height + 2 * outlineSize + BORDER_SIZE ), outlineSize, outlineSize, outlineSize, outlineSize ) );
-            graphics.fillRect(component.getBounds().x - outlineSize + (fullSize - filledCurrentSize), component.getBounds().y - outlineSize,  (fullSize - filledCurrentSize), height + 2 * outlineSize + BORDER_SIZE );
+            graphics.fillRect(component.getBounds().x - outlineSize + (fullSize - filledCurrentSize), component.getBounds().y - outlineSize,  component.getBounds().x + fullSize, height + 2 * outlineSize + BORDER_SIZE );
             graphics.setClip( oldClip );
         }
         else if ( dir == FullnessDirection.RIGHT )
