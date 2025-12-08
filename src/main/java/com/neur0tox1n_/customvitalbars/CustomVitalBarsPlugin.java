@@ -92,7 +92,15 @@ public class CustomVitalBarsPlugin extends Plugin
 	private ClientThread clientThread;
 
 	@Getter(AccessLevel.PACKAGE)
-	private boolean barsDisplayed;
+	private boolean hitpointsDisplayed;
+    @Getter(AccessLevel.PACKAGE)
+	private boolean prayerDisplayed;
+    @Getter(AccessLevel.PACKAGE)
+	private boolean energyDisplayed;
+    @Getter(AccessLevel.PACKAGE)
+	private boolean specialDisplayed;
+    @Getter(AccessLevel.PACKAGE)
+	private boolean warmthDisplayed;
 	private boolean hideWhenBigUIOpen;
 
 	private int lastCombatActionTickCount;
@@ -119,7 +127,11 @@ public class CustomVitalBarsPlugin extends Plugin
 		overlayManager.remove( energyOverlay );
 		overlayManager.remove( specialOverlay );
 		overlayManager.remove( warmthOverlay );
-		barsDisplayed = false;
+		hitpointsDisplayed = false;
+		prayerDisplayed = false;
+		energyDisplayed = false;
+		specialDisplayed = false;
+		warmthDisplayed = false;
 	}
 
 	@Provides
@@ -242,20 +254,102 @@ public class CustomVitalBarsPlugin extends Plugin
 		}
 
 		final Actor interacting = localPlayer.getInteracting();
+        int hideHitpointAfterCombatDelay = config.hideHitpointsAfterCombatDelay();
+        int hidePrayerAfterCombatDelay = config.hidePrayerAfterCombatDelay();
+        int hideEnergyAfterCombatDelay = config.hideEnergyAfterCombatDelay();
+        int hideSpecialAfterCombatDelay = config.hideSpecialAfterCombatDelay();
+        int hideWarmthAfterCombatDelay = config.hideWarmthAfterCombatDelay();
+        boolean doInteractionCheck = false;
 
-		if (config.hideAfterCombatDelay() == 0)
-		{
-			barsDisplayed = true;
-		}
-		else if ((interacting instanceof NPC && ArrayUtils.contains(((NPC) interacting).getComposition().getActions(), "Attack"))
-			|| (interacting instanceof Player && client.getVarbitValue(Varbits.PVP_SPEC_ORB) == 1))
+        if ( hideHitpointAfterCombatDelay == 0 )
+        {
+            hitpointsDisplayed = true;
+        }
+        else
+        {
+            doInteractionCheck = true;
+        }
+        if ( hidePrayerAfterCombatDelay == 0 )
+        {
+            prayerDisplayed = true;
+        }
+        else
+        {
+            doInteractionCheck = true;
+        }
+        if ( hideEnergyAfterCombatDelay == 0 )
+        {
+            energyDisplayed = true;
+        }
+        else
+        {
+            doInteractionCheck = true;
+        }
+        if ( hideSpecialAfterCombatDelay == 0 )
+        {
+            specialDisplayed = true;
+        }
+        else
+        {
+            doInteractionCheck = true;
+        }
+        if ( hideWarmthAfterCombatDelay == 0 )
+        {
+            warmthDisplayed = true;
+        }
+        else
+        {
+            doInteractionCheck = true;
+        }
+
+		if ( doInteractionCheck && (interacting instanceof NPC && ArrayUtils.contains(((NPC) interacting).getComposition().getActions(), "Attack"))
+                || (interacting instanceof Player && client.getVarbitValue(Varbits.PVP_SPEC_ORB) == 1) )
 		{
 			lastCombatActionTickCount = client.getTickCount();
-			barsDisplayed = true;
+
+            if ( config.hideHitpointsAfterCombatDelay() > 0 )
+            {
+                hitpointsDisplayed = true;
+            }
+            if ( config.hidePrayerAfterCombatDelay() > 0 )
+            {
+                prayerDisplayed = true;
+            }
+            if ( config.hideEnergyAfterCombatDelay() > 0 )
+            {
+                energyDisplayed = true;
+            }
+            if ( config.hideSpecialAfterCombatDelay() > 0 )
+            {
+                specialDisplayed = true;
+            }
+            if ( config.hideWarmthAfterCombatDelay() > 0 )
+            {
+                warmthDisplayed = true;
+            }
 		}
-		else if (client.getTickCount() - lastCombatActionTickCount >= config.hideAfterCombatDelay())
+		else if ( doInteractionCheck )
 		{
-			barsDisplayed = false;
+            if ( (client.getTickCount() - lastCombatActionTickCount >= hideHitpointAfterCombatDelay) && hideHitpointAfterCombatDelay > 0 )
+            {
+                hitpointsDisplayed = false;
+            }
+            if ( (client.getTickCount() - lastCombatActionTickCount >= hidePrayerAfterCombatDelay) && hidePrayerAfterCombatDelay > 0 )
+            {
+                prayerDisplayed = false;
+            }
+            if ( (client.getTickCount() - lastCombatActionTickCount >= hideEnergyAfterCombatDelay) && hideEnergyAfterCombatDelay > 0 )
+            {
+                energyDisplayed = false;
+            }
+            if ( (client.getTickCount() - lastCombatActionTickCount >= hideSpecialAfterCombatDelay) && hideSpecialAfterCombatDelay > 0 )
+            {
+                specialDisplayed = false;
+            }
+            if ( (client.getTickCount() - lastCombatActionTickCount >= hideWarmthAfterCombatDelay) && hideWarmthAfterCombatDelay > 0 )
+            {
+                warmthDisplayed = false;
+            }
 		}
 	}
 }

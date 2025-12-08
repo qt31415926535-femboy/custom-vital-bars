@@ -25,6 +25,27 @@
  */
 package com.neur0tox1n_.customvitalbars;
 
+import com.google.common.collect.ImmutableSet;
+import lombok.Getter;
+import net.runelite.api.*;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.*;
+import net.runelite.api.widgets.ComponentID;
+import net.runelite.api.widgets.Widget;
+import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.game.ItemVariationMapping;
+import net.runelite.client.game.SkillIconManager;
+import net.runelite.client.game.SpriteManager;
+import net.runelite.client.plugins.itemstats.Effect;
+import net.runelite.client.plugins.itemstats.ItemStatChangesService;
+import net.runelite.client.plugins.itemstats.StatChange;
+import net.runelite.client.ui.overlay.OverlayLayer;
+import net.runelite.client.ui.overlay.OverlayPanel;
+import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.ui.overlay.OverlayPriority;
+import net.runelite.client.util.RSTimeUnit;
+
+import javax.inject.Inject;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.time.Duration;
@@ -34,30 +55,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
-import javax.inject.Inject;
-
-import com.google.common.collect.ImmutableSet;
-import lombok.Getter;
-import net.runelite.api.*;
-import net.runelite.api.coords.WorldPoint;
-import net.runelite.api.events.*;
-import net.runelite.api.widgets.ComponentID;
-import net.runelite.api.widgets.InterfaceID;
-import net.runelite.api.widgets.Widget;
-import net.runelite.client.config.ConfigManager;
-import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.game.ItemVariationMapping;
-import net.runelite.client.game.SkillIconManager;
-import net.runelite.client.game.SpriteManager;
-import net.runelite.client.plugins.itemstats.Effect;
-import net.runelite.client.plugins.itemstats.ItemStatChangesService;
-import net.runelite.client.plugins.itemstats.StatChange;
-import net.runelite.client.ui.overlay.*;
-import net.runelite.client.util.RSTimeUnit;
 
 import static com.neur0tox1n_.customvitalbars.GameTimer.STAMINA;
 import static net.runelite.api.ItemID.*;
-import static net.runelite.api.ItemID.MAX_CAPE;
 
 public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 {
@@ -253,7 +253,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 
          */
 
-        if ( config.hideWhenSidebarPanelClosed() ) {
+        if ( config.hideEnergyWhenSidebarPanelClosed() ) {
             Viewport curViewport = null;
             Widget curWidget = null;
 
@@ -271,9 +271,9 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
             }
         }
 
-        if ( plugin.isBarsDisplayed() && config.renderEnergy() && !uiElementsOpen )
+        if ( plugin.isEnergyDisplayed() && config.renderEnergy() && !uiElementsOpen )
         {
-            barRenderer.renderBar( config, g, panelComponent, Vital.RUN_ENERGY, (staminaEffectActive == 1) );
+            barRenderer.renderBar( config, g, panelComponent, Vital.RUN_ENERGY, (staminaEffectActive == 1), client );
             return config.energySize();
         }
 

@@ -156,7 +156,7 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
             prayerConsumptionRateOrRegeneration = (double)elapsedPrayerTimeInMilliseconds / PRAYER_REGENERATION_INTERVAL_MILLISECONDS;
         }
 
-        if ( config.hideWhenSidebarPanelClosed() ) {
+        if ( config.hidePrayerWhenSidebarPanelClosed() ) {
             Viewport curViewport = null;
             Widget curWidget = null;
 
@@ -174,9 +174,9 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
             }
         }
 
-        if ( plugin.isBarsDisplayed() && config.renderPrayer() && !uiElementsOpen )
+        if ( plugin.isPrayerDisplayed() && config.renderPrayer() && !uiElementsOpen )
         {
-            barRenderer.renderBar( config, g, panelComponent, Vital.PRAYER, regenPotionEffectActive );
+            barRenderer.renderBar( config, g, panelComponent, Vital.PRAYER, regenPotionEffectActive, client );
 
             return config.prayerSize();
         }

@@ -192,8 +192,36 @@ public interface CustomVitalBarsConfig extends Config
 	)
 	default int hitpointsIconOffsetY() { return 0; }
 
-	@ConfigItem(
-			position = 18,
+    @ConfigItem(
+            position = 18,
+            keyName = "hitpointsRelativeToSidebarPanel",
+            name = "Lock Hitpoints bar relative to sidebar",
+            description = "Whether or not to move the Hitpoints bar relative to the sidebar (panel with inventory/prayers/spells)",
+            section = hitpointsSettingsSection
+    )
+    default boolean hitpointsRelativeToInventory() { return false; }
+
+    @ConfigItem(
+            position = 19,
+            keyName = "hideHitpointsWhenSidebarPanelClosed",
+            name = "Hide Hitpoints bar when sidebar is closed",
+            description = "Whether or not to hide the Hitpoints bar when sidebar is closed (panel with inventory/prayers/spells)",
+            section = hitpointsSettingsSection
+    )
+    default boolean hideHitpointsWhenSidebarPanelClosed() { return false; }
+
+    @ConfigItem(
+            position = 20,
+            keyName = "hideHitpointsAfterCombatDelay",
+            name = "Hide Hitpoints bar after combat delay",
+            description = "Amount of ticks after combat has ended to hide the Hitpoints bar (0 = always show)",
+            section = hitpointsSettingsSection
+    )
+    @Units(Units.TICKS)
+    default int hideHitpointsAfterCombatDelay() { return 0; }
+
+    @ConfigItem(
+			position = 21,
 			keyName = "showPrayer",
 			name = "Show Prayer",
 			description = "Render Prayer bar"
@@ -201,14 +229,14 @@ public interface CustomVitalBarsConfig extends Config
 	default boolean renderPrayer() { return false; }
 
 	@ConfigSection(
-			position = 19,
+			position = 22,
 			name = "Prayer Bar Settings",
 			description = "Prayer Bar Settings"
 	)
 	String prayerSettingsSection = "prayerSettings";
 
 	@ConfigItem(
-			position = 20,
+			position = 23,
 			keyName = "prayerSize",
 			name = "Prayer Bar Size",
 			description = "Choose the size of the Prayer bar",
@@ -217,7 +245,7 @@ public interface CustomVitalBarsConfig extends Config
 	default Dimension prayerSize() { return new Dimension(ComponentConstants.STANDARD_WIDTH, 15 ); }
 
 	@ConfigItem(
-			position = 21,
+			position = 24,
 			keyName = "prayerFullnessDirection",
 			name = "Prayer Fullness Direction",
 			description = "Choose the direction of fullness of the Prayer bar",
@@ -226,7 +254,7 @@ public interface CustomVitalBarsConfig extends Config
 	default FullnessDirection prayerFullnessDirection() { return FullnessDirection.RIGHT; }
 
 	@ConfigItem(
-			position = 22,
+			position = 25,
 			keyName = "prayerTextFormat",
 			name = "Prayer Text Formatting",
 			description = "Choose the formatting of the Prayer bar's text",
@@ -238,7 +266,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 23,
+			position = 26,
 			keyName = "prayerTextPosition",
 			name = "Prayer Text Position",
 			description = "Choose the general location of the Prayer bar's text",
@@ -250,7 +278,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 24,
+			position = 27,
 			keyName = "prayerTextOffsetX",
 			name = "Prayer Bar Text Offset - X axis",
 			description = "The X-offset for the text of the Prayer bar",
@@ -263,7 +291,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int prayerTextOffsetX() { return 0; }
 
 	@ConfigItem(
-			position = 25,
+			position = 28,
 			keyName = "prayerTextOffsetY",
 			name = "Prayer Bar Text Offset - Y axis",
 			description = "The Y-offset for the text of the Prayer bar",
@@ -276,7 +304,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int prayerTextOffsetY() { return 0; }
 
 	@ConfigItem(
-			position = 26,
+			position = 29,
 			keyName = "prayerGlowThresholdMode",
 			name = "Prayer Bar Glow Threshold Mode",
 			description = "Choose how to determine the critical threshold at which to glow the Prayer bar",
@@ -288,7 +316,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 27,
+			position = 30,
 			keyName = "prayerGlowThresholdValue",
 			name = "Prayer Bar Glow Threshold Value",
 			description = "Choose what value of the chosen mode to start glowing the Prayer bar",
@@ -297,7 +325,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int prayerGlowThresholdValue() { return 10; }
 
 	@ConfigItem(
-			position = 28,
+			position = 31,
 			keyName = "prayerOutlineThickness",
 			name = "Prayer Bar Outline Effects Thickness",
 			description = "How thick to draw an outline around the Prayer bar",
@@ -310,7 +338,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int prayerOutlineThickness() { return 3; }
 
 	@ConfigItem(
-			position = 29,
+			position = 32,
 			keyName = "prayerOutlineProgressSelection",
 			name = "Prayer Bar Outline Progress Selection",
 			description = "What to show with the progress of the outline of the Prayer bar (Prayer degen / Prayer Regeneration Potion)",
@@ -319,7 +347,7 @@ public interface CustomVitalBarsConfig extends Config
 	default OutlineProgressSelection prayerOutlineProgressSelection() { return OutlineProgressSelection.SHOW_NATURAL_AND_CONSUMABLE_PROGRESS; }
 
 	@ConfigItem(
-			position = 30,
+			position = 33,
 			keyName = "prayerOutlineProgressThreshold",
 			name = "Prayer Bar Outline Progress Threshold",
 			description = "When to stop progress on the outline of the Prayer bar",
@@ -328,7 +356,7 @@ public interface CustomVitalBarsConfig extends Config
 	default OutlineProgressThreshold prayerOutlineProgressThreshold() { return OutlineProgressThreshold.RELATED_STAT_AT_MAX; }
 
 	@ConfigItem(
-			position = 31,
+			position = 34,
 			keyName = "prayerIconScale",
 			name = "Prayer Bar Icon Image Scale",
 			description = "Choose the size scaling of the Prayer bar icon",
@@ -337,7 +365,7 @@ public interface CustomVitalBarsConfig extends Config
 	default double prayerIconScale() { return 0d; }
 
 	@ConfigItem(
-			position = 32,
+			position = 35,
 			keyName = "prayerIconPosition",
 			name = "Prayer Bar Icon Position",
 			description = "Choose the general location of the Prayer bar icon",
@@ -346,7 +374,7 @@ public interface CustomVitalBarsConfig extends Config
 	default PlacementDirection prayerIconPosition() { return PlacementDirection.LEFT; }
 
 	@ConfigItem(
-			position = 33,
+			position = 36,
 			keyName = "prayerIconOffsetX",
 			name = "Prayer Bar Icon Offset - X axis",
 			description = "The X-offset for the icon of the Prayer bar",
@@ -359,7 +387,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int prayerIconOffsetX() { return 0; }
 
 	@ConfigItem(
-			position = 34,
+			position = 37,
 			keyName = "prayerIconOffsetY",
 			name = "Prayer Bar Icon Offset - Y axis",
 			description = "The Y-offset for the icon of the Prayer bar",
@@ -371,8 +399,36 @@ public interface CustomVitalBarsConfig extends Config
 	)
 	default int prayerIconOffsetY() { return 0; }
 
-	@ConfigItem(
-			position = 35,
+    @ConfigItem(
+            position = 38,
+            keyName = "prayerRelativeToSidebarPanel",
+            name = "Lock Prayer bar relative to sidebar",
+            description = "Whether or not to move the Prayer bar relative to the sidebar (panel with inventory/prayers/spells)",
+            section = prayerSettingsSection
+    )
+    default boolean prayerRelativeToInventory() { return false; }
+
+    @ConfigItem(
+            position = 39,
+            keyName = "hidePrayerWhenSidebarPanelClosed",
+            name = "Hide Prayer bar when sidebar is closed",
+            description = "Whether or not to hide the Prayer bar when sidebar is closed (panel with inventory/prayers/spells)",
+            section = prayerSettingsSection
+    )
+    default boolean hidePrayerWhenSidebarPanelClosed() { return false; }
+
+    @ConfigItem(
+            position = 40,
+            keyName = "hidePrayerAfterCombatDelay",
+            name = "Hide Prayer bar after combat delay",
+            description = "Amount of ticks after combat has ended to hide the Prayer bar (0 = always show)",
+            section = prayerSettingsSection
+    )
+    @Units(Units.TICKS)
+    default int hidePrayerAfterCombatDelay() { return 0; }
+
+    @ConfigItem(
+			position = 41,
 			keyName = "showEnergy",
 			name = "Show Energy",
 			description = "Render Run Energy bar"
@@ -380,35 +436,35 @@ public interface CustomVitalBarsConfig extends Config
 	default boolean renderEnergy() { return false; }
 
 	@ConfigSection(
-			position = 36,
+			position = 42,
 			name = "Energy Bar Settings",
-			description = "Energy Bar Settings"
+			description = "Run Energy Bar Settings"
 	)
 	String energySettingsSection = "energySettings";
 
 	@ConfigItem(
-			position = 37,
+			position = 43,
 			keyName = "energySize",
 			name = "Energy Bar Size",
-			description = "Choose the size of the Energy bar",
+			description = "Choose the size of the Run Energy bar",
 			section = energySettingsSection
 	)
 	default Dimension energySize() { return new Dimension(ComponentConstants.STANDARD_WIDTH, 15 ); }
 
 	@ConfigItem(
-			position = 38,
+			position = 44,
 			keyName = "energyFullnessDirection",
 			name = "Energy Fullness Direction",
-			description = "Choose the direction of fullness of the Energy bar",
+			description = "Choose the direction of fullness of the Run Energy bar",
 			section = energySettingsSection
 	)
 	default FullnessDirection energyFullnessDirection() { return FullnessDirection.RIGHT; }
 
 	@ConfigItem(
-			position = 39,
+			position = 45,
 			keyName = "energyTexFormat",
 			name = "Energy Text Formatting",
-			description = "Choose the formatting of the Energy bar's text",
+			description = "Choose the formatting of the Run Energy bar's text",
 			section = energySettingsSection
 	)
 	default TextFormatting energyTextFormat()
@@ -417,10 +473,10 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 40,
+			position = 46,
 			keyName = "energyTextPosition",
 			name = "Energy Text Position",
-			description = "Choose the general location of the Energy bar's text",
+			description = "Choose the general location of the Run Energy bar's text",
 			section = energySettingsSection
 	)
 	default PlacementDirection energyTextPosition()
@@ -429,10 +485,10 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 41,
+			position = 47,
 			keyName = "energyTextOffsetX",
 			name = "Energy Bar Text Offset - X axis",
-			description = "The X-offset for the text of the Energy bar",
+			description = "The X-offset for the text of the Run Energy bar",
 			section = energySettingsSection
 	)
 	@Range(
@@ -442,10 +498,10 @@ public interface CustomVitalBarsConfig extends Config
 	default int energyTextOffsetX() { return 0; }
 
 	@ConfigItem(
-			position = 42,
+			position = 48,
 			keyName = "energyTextOffsetY",
 			name = "Energy Bar Text Offset - Y axis",
-			description = "The Y-offset for the text of the Energy bar",
+			description = "The Y-offset for the text of the Run Energy bar",
 			section = energySettingsSection
 	)
 	@Range(
@@ -455,10 +511,10 @@ public interface CustomVitalBarsConfig extends Config
 	default int energyTextOffsetY() { return 0; }
 
 	@ConfigItem(
-			position = 43,
+			position = 49,
 			keyName = "energyGlowThresholdMode",
 			name = "Energy Bar Glow Threshold Mode",
-			description = "Choose how to determine the critical threshold at which to glow the Energy bar",
+			description = "Choose how to determine the critical threshold at which to glow the Run Energy bar",
 			section = energySettingsSection
 	)
 	default ThresholdGlowMode energyGlowThresholdMode()
@@ -467,19 +523,19 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 44,
+			position = 50,
 			keyName = "energyGlowThresholdValue",
 			name = "Energy Bar Glow Threshold Value",
-			description = "Choose what value of the chosen mode to start glowing the Energy bar",
+			description = "Choose what value of the chosen mode to start glowing the Run Energy bar",
 			section = energySettingsSection
 	)
 	default int energyGlowThresholdValue() { return 10; }
 
 	@ConfigItem(
-			position = 45,
+			position = 51,
 			keyName = "energyOutlineThickness",
 			name = "Energy Bar Outline Effects Thickness",
-			description = "How thick to draw an outline around the Energy bar",
+			description = "How thick to draw an outline around the Run Energy bar",
 			section = energySettingsSection
 	)
 	@Range(
@@ -489,46 +545,46 @@ public interface CustomVitalBarsConfig extends Config
 	default int energyOutlineThickness() { return 3; }
 
 	@ConfigItem(
-			position = 46,
+			position = 52,
 			keyName = "energyOutlineProgressSelection",
 			name = "Energy Bar Outline Progress Selection",
-			description = "What to show with the progress of the outline of the Energy bar (natural regen / Stamina Potion duration)",
+			description = "What to show with the progress of the outline of the Run Energy bar (natural regen / Stamina Potion duration)",
 			section = energySettingsSection
 	)
 	default OutlineProgressSelection energyOutlineProgressSelection() { return OutlineProgressSelection.SHOW_NATURAL_AND_CONSUMABLE_PROGRESS; }
 
 	@ConfigItem(
-			position = 47,
+			position = 53,
 			keyName = "energyOutlineProgressThreshold",
 			name = "Energy Bar Outline Progress Threshold",
-			description = "When to stop progress on the outline of the Energy bar",
+			description = "When to stop progress on the outline of the Run Energy bar",
 			section = energySettingsSection
 	)
 	default OutlineProgressThreshold energyOutlineProgressThreshold() { return OutlineProgressThreshold.RELATED_STAT_AT_MAX; }
 
 	@ConfigItem(
-			position = 48,
+			position = 54,
 			keyName = "energyIconScale",
 			name = "Energy Bar Icon Image Scale",
-			description = "Choose the size scaling of the Energy bar icon",
+			description = "Choose the size scaling of the Run Energy bar icon",
 			section = energySettingsSection
 	)
 	default double energyIconScale() { return 0d; }
 
 	@ConfigItem(
-			position = 49,
+			position = 55,
 			keyName = "energyIconPosition",
 			name = "Energy Bar Icon Position",
-			description = "Choose the general location of the Energy bar icon",
+			description = "Choose the general location of the Run Energy bar icon",
 			section = energySettingsSection
 	)
 	default PlacementDirection energyIconPosition() { return PlacementDirection.LEFT; }
 
 	@ConfigItem(
-			position = 50,
+			position = 56,
 			keyName = "energyIconOffsetX",
 			name = "Energy Bar Icon Offset - X axis",
-			description = "The X-offset for the icon of the Energy bar",
+			description = "The X-offset for the icon of the Run Energy bar",
 			section = energySettingsSection
 	)
 	@Range(
@@ -538,10 +594,10 @@ public interface CustomVitalBarsConfig extends Config
 	default int energyIconOffsetX() { return 0; }
 
 	@ConfigItem(
-			position = 51,
+			position = 57,
 			keyName = "energyIconOffsetY",
 			name = "Energy Bar Icon Offset - Y axis",
-			description = "The Y-offset for the icon of the Energy bar",
+			description = "The Y-offset for the icon of the Run Energy bar",
 			section = energySettingsSection
 	)
 	@Range(
@@ -550,8 +606,36 @@ public interface CustomVitalBarsConfig extends Config
 	)
 	default int energyIconOffsetY() { return 0; }
 
-	@ConfigItem(
-			position = 52,
+    @ConfigItem(
+            position = 58,
+            keyName = "energyRelativeToSidebarPanel",
+            name = "Lock Run Energy bar relative to sidebar",
+            description = "Whether or not to move the Run Energy bar relative to the sidebar (panel with inventory/prayers/spells)",
+            section = energySettingsSection
+    )
+    default boolean energyRelativeToInventory() { return false; }
+
+    @ConfigItem(
+            position = 59,
+            keyName = "hideEnergyWhenSidebarPanelClosed",
+            name = "Hide Run Energy bar when sidebar is closed",
+            description = "Whether or not to hide the Run Energy bar when sidebar is closed (panel with inventory/prayers/spells)",
+            section = energySettingsSection
+    )
+    default boolean hideEnergyWhenSidebarPanelClosed() { return false; }
+
+    @ConfigItem(
+            position = 60,
+            keyName = "hideEnergyAfterCombatDelay",
+            name = "Hide Run Energy bar after combat delay",
+            description = "Amount of ticks after combat has ended to hide the Run Energy bar (0 = always show)",
+            section = energySettingsSection
+    )
+    @Units(Units.TICKS)
+    default int hideEnergyAfterCombatDelay() { return 0; }
+
+    @ConfigItem(
+			position = 61,
 			keyName = "showSpecial",
 			name = "Show Special",
 			description = "Render Special Attack bar"
@@ -559,14 +643,14 @@ public interface CustomVitalBarsConfig extends Config
 	default boolean renderSpecial() { return false; }
 
 	@ConfigSection(
-			position = 53,
+			position = 62,
 			name = "Special Bar Settings",
 			description = "Special Bar Settings"
 	)
 	String specialSettingsSection = "specialSettings";
 
 	@ConfigItem(
-			position = 54,
+			position = 63,
 			keyName = "specialSize",
 			name = "Special Bar Size",
 			description = "Choose the size of the Special bar",
@@ -575,7 +659,7 @@ public interface CustomVitalBarsConfig extends Config
 	default Dimension specialSize() { return new Dimension(ComponentConstants.STANDARD_WIDTH, 15 ); }
 
 	@ConfigItem(
-			position = 55,
+			position = 64,
 			keyName = "specialFullnessDirection",
 			name = "Special Fullness Direction",
 			description = "Choose the direction of fullness of the Special bar",
@@ -584,7 +668,7 @@ public interface CustomVitalBarsConfig extends Config
 	default FullnessDirection specialFullnessDirection() { return FullnessDirection.RIGHT; }
 
 	@ConfigItem(
-			position = 56,
+			position = 65,
 			keyName = "specialTextFormat",
 			name = "Special Text Formatting",
 			description = "Choose the formatting of the Special bar's text",
@@ -596,7 +680,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 57,
+			position = 66,
 			keyName = "specialTextPosition",
 			name = "Special Text Position",
 			description = "Choose the general location of the Special bar's Text",
@@ -608,7 +692,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 58,
+			position = 67,
 			keyName = "specialTextOffsetX",
 			name = "Special Bar Text Offset - X axis",
 			description = "The X-offset for the text of the Special bar",
@@ -621,7 +705,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int specialTextOffsetX() { return 0; }
 
 	@ConfigItem(
-			position = 59,
+			position = 68,
 			keyName = "specialTextOffsetY",
 			name = "Special Bar Text Offset - Y axis",
 			description = "The Y-offset for the text of the Special bar",
@@ -634,7 +718,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int specialTextOffsetY() { return 0; }
 
 	@ConfigItem(
-			position = 60,
+			position = 69,
 			keyName = "specialGlowThresholdMode",
 			name = "Special Bar Glow Threshold Mode",
 			description = "Choose how to determine the critical threshold at which to glow the Special bar",
@@ -646,7 +730,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 61,
+			position = 70,
 			keyName = "specialGlowThresholdValue",
 			name = "Special Bar Glow Threshold Value",
 			description = "Choose what value of the chosen mode to start glowing the Special bar",
@@ -655,7 +739,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int specialGlowThresholdValue() { return 10; }
 
 	@ConfigItem(
-			position = 62,
+			position = 71,
 			keyName = "specialOutlineThickness",
 			name = "Special Bar Outline Effects Thickness",
 			description = "How thick to draw an outline around the Special bar",
@@ -668,7 +752,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int specialOutlineThickness() { return 3; }
 
 	@ConfigItem(
-			position = 63,
+			position = 72,
 			keyName = "specialOutlineProgressSelection",
 			name = "Special Bar Outline Progress Selection",
 			description = "What to show with the progress of the outline of the Special bar (currently only supports natural regen)",
@@ -677,7 +761,7 @@ public interface CustomVitalBarsConfig extends Config
 	default OutlineProgressSelection specialOutlineProgressSelection() { return OutlineProgressSelection.SHOW_NATURAL_PROGRESS_ONLY; }
 
 	@ConfigItem(
-			position = 64,
+			position = 73,
 			keyName = "specialOutlineProgressThreshold",
 			name = "Special Bar Outline Progress Threshold",
 			description = "When to stop progress on the outline of the Special bar",
@@ -686,7 +770,7 @@ public interface CustomVitalBarsConfig extends Config
 	default OutlineProgressThreshold specialOutlineProgressThreshold() { return OutlineProgressThreshold.RELATED_STAT_AT_MAX; }
 
 	@ConfigItem(
-			position = 65,
+			position = 74,
 			keyName = "specialIconScale",
 			name = "Special Bar Icon Image Scale",
 			description = "Choose the size scaling of the Special bar icon",
@@ -695,7 +779,7 @@ public interface CustomVitalBarsConfig extends Config
 	default double specialIconScale() { return 0d; }
 
 	@ConfigItem(
-			position = 66,
+			position = 75,
 			keyName = "specialIconPosition",
 			name = "Special Bar Icon Position",
 			description = "Choose the general location of the Special bar icon",
@@ -704,7 +788,7 @@ public interface CustomVitalBarsConfig extends Config
 	default PlacementDirection specialIconPosition() { return PlacementDirection.LEFT; }
 
 	@ConfigItem(
-			position = 67,
+			position = 76,
 			keyName = "specialIconOffsetX",
 			name = "Special Bar Icon Offset - X axis",
 			description = "The X-offset for the icon of the Special bar",
@@ -717,7 +801,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int specialIconOffsetX() { return 0; }
 
 	@ConfigItem(
-			position = 68,
+			position = 77,
 			keyName = "specialIconOffsetY",
 			name = "Special Bar Icon Offset - Y axis",
 			description = "The Y-offset for the icon of the Special bar",
@@ -729,32 +813,51 @@ public interface CustomVitalBarsConfig extends Config
 	)
 	default int specialIconOffsetY() { return 0; }
 
-	@ConfigItem(
-			position = 69,
-			keyName = "showWarmth",
-			name = "Show Warmth",
-			description = "Render Warmth overlay"
-	)
-	default boolean renderWarmth() { return false; }
+    @ConfigItem(
+            position = 78,
+            keyName = "specialRelativeToSidebarPanel",
+            name = "Lock Special bar relative to sidebar",
+            description = "Whether or not to move the Special bar relative to the sidebar (panel with inventory/prayers/spells)",
+            section = specialSettingsSection
+    )
+    default boolean specialRelativeToInventory() { return false; }
 
-	@ConfigSection(
-			position = 70,
-			name = "Warmth Bar Settings",
-			description = "Warmth Bar Settings"
-	)
-	String warmthSettingsSection = "warmthSettings";
+    @ConfigItem(
+            position = 79,
+            keyName = "hideSpecialWhenSidebarPanelClosed",
+            name = "Hide Special bar when sidebar is closed",
+            description = "Whether or not to hide the Special bar when sidebar is closed (panel with inventory/prayers/spells)",
+            section = specialSettingsSection
+    )
+    default boolean hideSpecialWhenSidebarPanelClosed() { return false; }
+
+    @ConfigItem(
+            position = 80,
+            keyName = "hideSpecialAfterCombatDelay",
+            name = "Hide Special bar after combat delay",
+            description = "Amount of ticks after combat has ended to hide the Special bar (0 = always show)",
+            section = specialSettingsSection
+    )
+    @Units(Units.TICKS)
+    default int hideSpecialAfterCombatDelay() { return 0; }
+
+    @ConfigItem(
+            position = 81,
+            keyName = "showWarmthWithOptions",
+            name = "Show Warmth (Conditionally?)",
+            description = "Choose whether to hide, always show, or dynamically show the Warmth bar. Dynamically showing means the Warmth bar will display while the Hitpoints bar is hidden."
+    )
+    default WarmthRenderOptions renderWarmthWithOptions() { return WarmthRenderOptions.SHOW_DYNAMICALLY; }
+
+    @ConfigSection(
+            position = 82,
+            name = "Warmth Bar Settings",
+            description = "Warmth Bar Settings"
+    )
+    String warmthSettingsSection = "warmthSettings";
 
 	@ConfigItem(
-			position = 71,
-			keyName = "showWarmthDynamicallyInWintertodt",
-			name = "Show Warmth Dynamically at Wintertodt",
-			description = "Whether to show the Warmth bar in the Hitpoints bar's place while at Wintertodt",
-			section = warmthSettingsSection
-	)
-	default boolean warmthWintertodtDynamicOverride() { return true; }
-
-	@ConfigItem(
-			position = 72,
+			position = 83,
 			keyName = "warmthSize",
 			name = "Warmth Bar Size",
 			description = "Choose the size of the Warmth bar",
@@ -763,7 +866,7 @@ public interface CustomVitalBarsConfig extends Config
 	default Dimension warmthSize() { return new Dimension(ComponentConstants.STANDARD_WIDTH, 15 ); }
 
 	@ConfigItem(
-			position = 73,
+			position = 84,
 			keyName = "warmthFullnessDirection",
 			name = "Warmth Fullness Direction",
 			description = "Choose the direction of fullness of the Warmth bar",
@@ -772,7 +875,7 @@ public interface CustomVitalBarsConfig extends Config
 	default FullnessDirection warmthFullnessDirection() { return FullnessDirection.RIGHT; }
 
 	@ConfigItem(
-			position = 74,
+			position = 85,
 			keyName = "warmthTextFormat",
 			name = "Warmth Text Formatting",
 			description = "Choose the formatting of the Warmth bar's text",
@@ -784,7 +887,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 75,
+			position = 86,
 			keyName = "warmthTextPosition",
 			name = "Warmth Text Position",
 			description = "Choose the general location of the Warmth bar's Text",
@@ -796,7 +899,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 76,
+			position = 87,
 			keyName = "warmthTextOffsetX",
 			name = "Warmth Bar Text Offset - X axis",
 			description = "The X-offset for the text of the Warmth bar",
@@ -809,7 +912,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int warmthTextOffsetX() { return 0; }
 
 	@ConfigItem(
-			position = 77,
+			position = 88,
 			keyName = "warmthTextOffsetY",
 			name = "Warmth Bar Text Offset - Y axis",
 			description = "The Y-offset for the text of the Warmth bar",
@@ -822,7 +925,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int warmthTextOffsetY() { return 0; }
 
 	@ConfigItem(
-			position = 78,
+			position = 89,
 			keyName = "warmthGlowThresholdMode",
 			name = "Warmth Bar Glow Threshold Mode",
 			description = "Choose how to determine the critical threshold at which to glow the Warmth bar",
@@ -834,7 +937,7 @@ public interface CustomVitalBarsConfig extends Config
 	}
 
 	@ConfigItem(
-			position = 79,
+			position = 90,
 			keyName = "warmthGlowThresholdValue",
 			name = "Warmth Bar Glow Threshold Value",
 			description = "Choose what value of the chosen mode to start glowing the Warmth bar",
@@ -843,7 +946,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int warmthGlowThresholdValue() { return 10; }
 
 	@ConfigItem(
-			position = 80,
+			position = 91,
 			keyName = "warmthOutlineThickness",
 			name = "Warmth Bar Outline Effects Thickness",
 			description = "How thick to draw an outline around the Warmth bar",
@@ -856,7 +959,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int warmthOutlineThickness() { return 3; }
 
 	@ConfigItem(
-			position = 81,
+			position = 92,
 			keyName = "warmthOutlineProgressSelection",
 			name = "Warmth Bar Outline Progress Selection",
 			description = "What to show with the progress of the outline of the Warmth bar (currently only supports natural regen)",
@@ -865,7 +968,7 @@ public interface CustomVitalBarsConfig extends Config
 	default OutlineProgressSelection warmthOutlineProgressSelection() { return OutlineProgressSelection.SHOW_NATURAL_PROGRESS_ONLY; }
 
 	@ConfigItem(
-			position = 82,
+			position = 93,
 			keyName = "warmthOutlineProgressThreshold",
 			name = "Warmth Bar Outline Progress Threshold",
 			description = "When to stop progress on the outline of the Warmth bar",
@@ -874,7 +977,7 @@ public interface CustomVitalBarsConfig extends Config
 	default OutlineProgressThreshold warmthOutlineProgressThreshold() { return OutlineProgressThreshold.RELATED_STAT_AT_MAX; }
 
 	@ConfigItem(
-			position = 83,
+			position = 94,
 			keyName = "warmthIconScale",
 			name = "Warmth Bar Icon Image Scale",
 			description = "Choose the size scaling of the Warmth bar icon",
@@ -883,7 +986,7 @@ public interface CustomVitalBarsConfig extends Config
 	default double warmthIconScale() { return 0d; }
 
 	@ConfigItem(
-			position = 84,
+			position = 95,
 			keyName = "warmthIconPosition",
 			name = "Warmth Bar Icon Position",
 			description = "Choose the general location of the Warmth bar icon",
@@ -892,7 +995,7 @@ public interface CustomVitalBarsConfig extends Config
 	default PlacementDirection warmthIconPosition() { return PlacementDirection.LEFT; }
 
 	@ConfigItem(
-			position = 85,
+			position = 96,
 			keyName = "warmthIconOffsetX",
 			name = "Warmth Bar Icon Offset - X axis",
 			description = "The X-offset for the icon of the Warmth bar",
@@ -905,7 +1008,7 @@ public interface CustomVitalBarsConfig extends Config
 	default int warmthIconOffsetX() { return 0; }
 
 	@ConfigItem(
-			position = 86,
+			position = 97,
 			keyName = "warmthIconOffsetY",
 			name = "Warmth Bar Icon Offset - Y axis",
 			description = "The Y-offset for the icon of the Warmth bar",
@@ -917,8 +1020,36 @@ public interface CustomVitalBarsConfig extends Config
 	)
 	default int warmthIconOffsetY() { return 0; }
 
-	@ConfigItem(
-			position = 87,
+    @ConfigItem(
+            position = 98,
+            keyName = "warmthRelativeToSidebarPanel",
+            name = "Lock Warmth bar relative to sidebar",
+            description = "Whether or not to move the Warmth bar relative to the sidebar (panel with inventory/prayers/spells)",
+            section = warmthSettingsSection
+    )
+    default boolean warmthRelativeToInventory() { return false; }
+
+    @ConfigItem(
+            position = 99,
+            keyName = "hideWarmthWhenSidebarPanelClosed",
+            name = "Hide Warmth bar when sidebar is closed",
+            description = "Whether or not to hide the Warmth bar when sidebar is closed (panel with inventory/prayers/spells)",
+            section = warmthSettingsSection
+    )
+    default boolean hideWarmthWhenSidebarPanelClosed() { return false; }
+
+    @ConfigItem(
+            position = 100,
+            keyName = "hideWarmthAfterCombatDelay",
+            name = "Hide Warmth bar after combat delay",
+            description = "Amount of ticks after combat has ended to hide the Warmth bar (0 = always show)",
+            section = warmthSettingsSection
+    )
+    @Units(Units.TICKS)
+    default int hideWarmthAfterCombatDelay() { return 0; }
+
+    @ConfigItem(
+			position = 101,
 			keyName = "enableRestorationBars",
 			name = "Show Restores",
 			description = "Visually shows how much will be restored to your vital bars."
@@ -926,27 +1057,10 @@ public interface CustomVitalBarsConfig extends Config
 	default boolean enableRestorationBars() { return true; }
 
 	@ConfigItem(
-			position = 88,
-			keyName = "hideAfterCombatDelay",
-			name = "Hide after combat delay",
-			description = "Amount of ticks before hiding vital bars after no longer in combat. 0 = always show status bars."
-	)
-	@Units(Units.TICKS)
-	default int hideAfterCombatDelay() { return 0; }
-
-	@ConfigItem(
-			position = 89,
+			position = 102,
 			keyName = "hideWhenLargeInterfacePanelsOpen",
 			name = "Hide when large UI elements are open",
 			description = "Whether or not to hide the vital bars when large UI elements are open (ie Bank, Clue Scroll text)"
 	)
 	default boolean hideWhenLargeInterfacePanelsOpen() { return true; }
-
-	@ConfigItem(
-			position = 90,
-			keyName = "hideWhenSidebarPanelClosed",
-			name = "Hide when sidebar is closed",
-			description = "Whether or not to hide the vital bars when sidebar is closed (ie the panel with the inventory/prayers/spells)"
-	)
-	default boolean hideWhenSidebarPanelClosed() { return false; }
 }

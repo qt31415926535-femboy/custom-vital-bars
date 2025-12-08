@@ -3,6 +3,7 @@
 package com.neur0tox1n_.customvitalbars;
 
 import java.awt.*;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +25,7 @@ import net.runelite.client.plugins.itemstats.StatChange;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.ui.overlay.components.PanelComponent;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.Text;
 
@@ -71,6 +73,8 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
 
     private final Map<Integer, Integer> previousInventory = new HashMap<>();
     private boolean isEating = false;
+
+    public int x = 0, y = 0;
 
     @Inject
     CustomVitalBarsHitpointsOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager)
@@ -204,7 +208,7 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
             hitpointsRecoveryPercentage = millisecondsToDelayedRecovery / (double) millisecondsToHPRecovery;
         }
 
-        if ( config.hideWhenSidebarPanelClosed() )
+        if ( config.hideHitpointsWhenSidebarPanelClosed() )
         {
             Viewport curViewport = null;
             Widget curWidget = null;
@@ -225,11 +229,13 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
             }
         }
 
-        if ( !(config.warmthWintertodtDynamicOverride() && isInWintertodtRegion()) && plugin.isBarsDisplayed() && config.renderHitpoints() && !uiElementsOpen )
+        if ( !(config.renderWarmthWithOptions() == WarmthRenderOptions.SHOW_DYNAMICALLY && isInWintertodtRegion()) && plugin.isHitpointsDisplayed() && config.renderHitpoints() && !uiElementsOpen )
         {
-            barRenderer.renderBar( config, g, panelComponent, Vital.HITPOINTS, (ticksToDelayedRecovery > 0) );
+            barRenderer.renderBar( config, g, panelComponent, Vital.HITPOINTS, (ticksToDelayedRecovery > 0), client );
             return config.hitpointsSize();
         }
+
+        //this.setPreferredLocation( new Point( x, y ) );
 
         return null;
     }

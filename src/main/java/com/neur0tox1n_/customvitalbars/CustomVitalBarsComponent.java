@@ -36,13 +36,18 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 
 import net.runelite.api.Client;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.Notification;
+import com.neur0tox1n_.customvitalbars.Viewport;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.components.TextComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
 
 import javax.inject.Inject;
+
+
+import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 class CustomVitalBarsComponent
@@ -75,6 +80,14 @@ class CustomVitalBarsComponent
     private int pulseColourDirection = -1;
     private int pulseColourIncrement = 3;
 
+    int initialX = 200, initialY = 200;
+    int lastKnownInitialX = 200, lastKnownInitialY = 200;
+
+    private static final int RESIZED_BOTTOM_OFFSET_Y = 9;
+    private static final int RESIZED_BOTTOM_OFFSET_X = 201;
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CustomVitalBarsComponent.class);
+
     private PanelComponent boundingBox =  null;
 
     private void refreshSkills()
@@ -83,7 +96,7 @@ class CustomVitalBarsComponent
         currentValue = currentValueSupplier.get();
     }
 
-    void renderBar( CustomVitalBarsConfig config, Graphics2D graphics, PanelComponent component, Vital whichVital, boolean isConsumableActive )
+    void renderBar( CustomVitalBarsConfig config, Graphics2D graphics, PanelComponent component, Vital whichVital, boolean isConsumableActive, Client client )
     {
         FullnessDirection dir = null;
         TextFormatting textFormat = null;
@@ -96,7 +109,7 @@ class CustomVitalBarsComponent
         double iconScale = 0d;
         PlacementDirection iconLoc = null;
         int iconOffsetX = 0, iconOffsetY = 0;
-        int initialX = 200, initialY = 200;
+        boolean lockRelativeToInventory = false;
 
         if ( whichVital == Vital.HITPOINTS )
         {
@@ -116,6 +129,7 @@ class CustomVitalBarsComponent
             iconOffsetY = config.hitpointsIconOffsetY();
             width = config.hitpointsSize().width;
             height = config.hitpointsSize().height;
+            lockRelativeToInventory = config.hitpointsRelativeToInventory();
         }
         else if ( whichVital == Vital.PRAYER )
         {
@@ -135,6 +149,7 @@ class CustomVitalBarsComponent
             iconOffsetY = config.prayerIconOffsetY();
             width = config.prayerSize().width;
             height = config.prayerSize().height;
+            lockRelativeToInventory = config.prayerRelativeToInventory();
         }
         else if ( whichVital == Vital.RUN_ENERGY )
         {
@@ -154,6 +169,7 @@ class CustomVitalBarsComponent
             iconOffsetY = config.energyIconOffsetY();
             width = config.energySize().width;
             height = config.energySize().height;
+            lockRelativeToInventory = config.energyRelativeToInventory();
         }
         else if ( whichVital == Vital.SPECIAL_ENERGY )
         {
@@ -173,6 +189,7 @@ class CustomVitalBarsComponent
             iconOffsetY = config.specialIconOffsetY();
             width = config.specialSize().width;
             height = config.specialSize().height;
+            lockRelativeToInventory = config.specialRelativeToInventory();
         }
         else if ( whichVital == Vital.WARMTH )
         {
@@ -192,12 +209,13 @@ class CustomVitalBarsComponent
             iconOffsetY = config.warmthIconOffsetY();
             width = config.warmthSize().width;
             height = config.warmthSize().height;
+            lockRelativeToInventory = config.warmthRelativeToInventory();
         }
 
         if ( boundingBox == null )
         {
             boundingBox = new PanelComponent();
-            component.getChildren().add( boundingBox );
+            component.getChildren().add(boundingBox);
         }
         else
         {
@@ -205,17 +223,49 @@ class CustomVitalBarsComponent
             initialY = component.getBounds().y;
         }
 
-        boundingBox.setBorder( new Rectangle( initialX, initialY, width, height ) );
-        boundingBox.setPreferredSize( new Dimension( width, height ) );
+        if ( lockRelativeToInventory )
+        {
+            Viewport curViewport = null;
+            Widget curWidget = null;
+
+            for (Viewport viewport : Viewport.values())
+            {
+                final Widget viewportWidget = client.getWidget(viewport.getViewport());
+                if (viewportWidget != null && !viewportWidget.isHidden())
+                {
+                    curViewport = viewport;
+                    curWidget = viewportWidget;
+                    break;
+                }
+            }
+
+            if (curViewport != null)
+            {
+                final net.runelite.api.Point location = curWidget.getCanvasLocation();
+
+                initialX = location.getX() - client.getViewportWidth() + RESIZED_BOTTOM_OFFSET_X;
+                initialY = location.getY() - client.getViewportHeight() / 2 - RESIZED_BOTTOM_OFFSET_Y;
+
+                lastKnownInitialX = initialX;
+                lastKnownInitialY = initialY;
+            }
+            else if ( curViewport == null )
+            {
+               initialX = lastKnownInitialX;
+               initialY = lastKnownInitialY;
+            }
+        }
 
         if ( outlineThickness > 0 )
         {
-            renderOutline( config, graphics, component, dir, outlineThickness, selectionOutlineProgress, thresholdOutlineProgress, width, height, isConsumableActive );
+            renderOutline( config, graphics, initialX, initialY, dir, outlineThickness, selectionOutlineProgress, thresholdOutlineProgress, width, height, isConsumableActive );
         }
 
         // start by assuming the bar will be filled rightward
-        int eX = component.getBounds().x;
-        int eY = component.getBounds().y;
+        //int eX = component.getBounds().x;
+        //int eY = component.getBounds().y;
+        int eX = initialX;
+        int eY = initialY;
         int filledWidth = getBarSize(maxValue, currentValue, width);
         int filledHeight = height;
 
@@ -223,7 +273,7 @@ class CustomVitalBarsComponent
         {
             filledHeight = getBarSize( maxValue, currentValue, height );
             filledWidth = width;
-            eY = height - filledHeight;
+            eY -= height - filledHeight;
         }
         else if ( dir == FullnessDirection.BOTTOM )
         {
@@ -232,7 +282,7 @@ class CustomVitalBarsComponent
         }
         else if ( dir == FullnessDirection.LEFT )
         {
-            eX = width - filledWidth;
+            eX -= width - filledWidth;
         }
 
         //final Color fill = colorSupplier.get();
@@ -241,8 +291,8 @@ class CustomVitalBarsComponent
         refreshSkills();
 
         graphics.setColor(BACKGROUND);
-        graphics.drawRect(component.getBounds().x, component.getBounds().y, width, height);
-        graphics.fillRect(component.getBounds().x, component.getBounds().y, width, height );
+        graphics.drawRect(initialX, initialY, width, height);
+        graphics.fillRect(initialX, initialY, width, height );
 
         pulseColour = false;
         if ( thresholdGlowMode == ThresholdGlowMode.ABOVE_PERCENTAGE )
@@ -298,24 +348,28 @@ class CustomVitalBarsComponent
 
         if ( config.enableRestorationBars() )
         {
-            renderRestore(config, graphics, dir, component.getBounds().x, component.getBounds().y, width, height);
+            renderRestore(config, graphics, dir, initialX, initialY, width, height);
         }
 
         if ( textFormat != TextFormatting.HIDE )
         {
-            renderText(config, graphics, textFormat, textLoc, textOffsetX, textOffsetY, outlineThickness, component.getBounds().x, component.getBounds().y, width, height );
+            renderText(config, graphics, textFormat, textLoc, textOffsetX, textOffsetY, outlineThickness, initialX, initialY, width, height );
         }
 
         if ( iconScale > 0d )
         {
-            renderIcon( config, graphics, iconScale, iconLoc, iconOffsetX, iconOffsetY, outlineThickness, component.getBounds().x, component.getBounds().y, width, height );
+            renderIcon( config, graphics, iconScale, iconLoc, iconOffsetX, iconOffsetY, outlineThickness, initialX, initialY, width, height );
         }
+
+        //boundingBox.setBorder( new Rectangle( 0, 0, width, height ) );
+        //boundingBox.setPreferredLocation( new Point( initialX, initialY ) );
+        //boundingBox.setPreferredSize( new Dimension( width, height ) );
     }
 
-    private void renderOutline( CustomVitalBarsConfig config, Graphics2D graphics, PanelComponent component, FullnessDirection dir, int outlineSize, OutlineProgressSelection selectionOutlineProgress, OutlineProgressThreshold thresholdOutlineProgress, int width, int height, boolean isConsumableActive )
+    private void renderOutline( CustomVitalBarsConfig config, Graphics2D graphics, int _x, int _y, FullnessDirection dir, int outlineSize, OutlineProgressSelection selectionOutlineProgress, OutlineProgressThreshold thresholdOutlineProgress, int width, int height, boolean isConsumableActive )
     {
         graphics.setColor( BACKGROUND );
-        graphics.drawRect( component.getBounds().x - outlineSize - 1, component.getBounds().y - outlineSize - 1, width + 2 * outlineSize + BORDER_SIZE + 1, height + 2 * outlineSize + BORDER_SIZE + 1 );
+        graphics.drawRect( _x - outlineSize - 1, _y - outlineSize - 1, width + 2 * outlineSize + BORDER_SIZE + 1, height + 2 * outlineSize + BORDER_SIZE + 1 );
 
         if (    selectionOutlineProgress == OutlineProgressSelection.HIDE ||
                 (selectionOutlineProgress == OutlineProgressSelection.SHOW_CONSUMABLE_PROGRESS_ONLY && !isConsumableActive) )
@@ -330,8 +384,8 @@ class CustomVitalBarsComponent
             final int filledCurrentSize = getBarSize( 100, (int) Math.floor( timeBasedEffectCounterSupplier.get() * 100 ), fullSize );
 
             Shape oldClip = graphics.getClip();
-            graphics.setClip( getOutsideEdge( graphics, new Rectangle( component.getBounds().x - outlineSize, component.getBounds().y - outlineSize, width + 2 * outlineSize + BORDER_SIZE, height + 2 * outlineSize + BORDER_SIZE ), outlineSize, outlineSize, outlineSize, outlineSize ) );
-            graphics.fillRect(component.getBounds().x - outlineSize, component.getBounds().y - outlineSize + (fullSize - filledCurrentSize), width + 2 * outlineSize + BORDER_SIZE, height + 2 * outlineSize + BORDER_SIZE - (fullSize - filledCurrentSize) );
+            graphics.setClip( getOutsideEdge( graphics, new Rectangle( _x - outlineSize, _y - outlineSize, width + 2 * outlineSize + BORDER_SIZE, height + 2 * outlineSize + BORDER_SIZE ), outlineSize, outlineSize, outlineSize, outlineSize ) );
+            graphics.fillRect(_x - outlineSize, _y - outlineSize + (fullSize - filledCurrentSize), width + 2 * outlineSize + BORDER_SIZE, height + 2 * outlineSize + BORDER_SIZE - (fullSize - filledCurrentSize) );
             graphics.setClip( oldClip );
         }
         else if ( dir == FullnessDirection.BOTTOM )
@@ -340,8 +394,8 @@ class CustomVitalBarsComponent
             final int filledCurrentSize = getBarSize( 100, (int) Math.floor( timeBasedEffectCounterSupplier.get() * 100 ), fullSize );
 
             Shape oldClip = graphics.getClip();
-            graphics.setClip( getOutsideEdge( graphics, new Rectangle( component.getBounds().x - outlineSize, component.getBounds().y - outlineSize, width + 2 * outlineSize + BORDER_SIZE, height + 2 * outlineSize + BORDER_SIZE ), outlineSize, outlineSize, outlineSize, outlineSize ) );
-            graphics.fillRect(component.getBounds().x - outlineSize, component.getBounds().y - outlineSize, width + 2 * outlineSize + BORDER_SIZE, filledCurrentSize );
+            graphics.setClip( getOutsideEdge( graphics, new Rectangle( _x - outlineSize, _y - outlineSize, width + 2 * outlineSize + BORDER_SIZE, height + 2 * outlineSize + BORDER_SIZE ), outlineSize, outlineSize, outlineSize, outlineSize ) );
+            graphics.fillRect(_x - outlineSize, _y - outlineSize, width + 2 * outlineSize + BORDER_SIZE, filledCurrentSize );
             graphics.setClip( oldClip );
         }
         else if ( dir == FullnessDirection.LEFT )
@@ -350,8 +404,8 @@ class CustomVitalBarsComponent
             final int filledCurrentSize = getBarSize( 100, (int) Math.floor( timeBasedEffectCounterSupplier.get() * 100 ), fullSize );
 
             Shape oldClip = graphics.getClip();
-            graphics.setClip( getOutsideEdge( graphics, new Rectangle( component.getBounds().x - outlineSize, component.getBounds().y - outlineSize, width + 2 * outlineSize + BORDER_SIZE, height + 2 * outlineSize + BORDER_SIZE ), outlineSize, outlineSize, outlineSize, outlineSize ) );
-            graphics.fillRect(component.getBounds().x - outlineSize + (fullSize - filledCurrentSize), component.getBounds().y - outlineSize,  component.getBounds().x + fullSize, height + 2 * outlineSize + BORDER_SIZE );
+            graphics.setClip( getOutsideEdge( graphics, new Rectangle( _x - outlineSize, _y - outlineSize, width + 2 * outlineSize + BORDER_SIZE, height + 2 * outlineSize + BORDER_SIZE ), outlineSize, outlineSize, outlineSize, outlineSize ) );
+            graphics.fillRect(_x - outlineSize + (fullSize - filledCurrentSize), _y - outlineSize,  _x + fullSize, height + 2 * outlineSize + BORDER_SIZE );
             graphics.setClip( oldClip );
         }
         else if ( dir == FullnessDirection.RIGHT )
@@ -360,8 +414,8 @@ class CustomVitalBarsComponent
             final int filledCurrentSize = getBarSize( 100, (int) Math.floor( timeBasedEffectCounterSupplier.get() * 100 ), fullSize );
 
             Shape oldClip = graphics.getClip();
-            graphics.setClip( getOutsideEdge( graphics, new Rectangle( component.getBounds().x - outlineSize, component.getBounds().y - outlineSize, width + 2 * outlineSize + BORDER_SIZE, height + 2 * outlineSize + BORDER_SIZE ), outlineSize, outlineSize, outlineSize, outlineSize ) );
-            graphics.fillRect(component.getBounds().x - outlineSize, component.getBounds().y - outlineSize, filledCurrentSize, height + 2 * outlineSize + BORDER_SIZE );
+            graphics.setClip( getOutsideEdge( graphics, new Rectangle( _x - outlineSize, _y - outlineSize, width + 2 * outlineSize + BORDER_SIZE, height + 2 * outlineSize + BORDER_SIZE ), outlineSize, outlineSize, outlineSize, outlineSize ) );
+            graphics.fillRect(_x - outlineSize, _y - outlineSize, filledCurrentSize, height + 2 * outlineSize + BORDER_SIZE );
             graphics.setClip( oldClip );
         }
     }
@@ -412,6 +466,7 @@ class CustomVitalBarsComponent
         textComponent.render( graphics );
 
     }
+
     private void renderIcon( CustomVitalBarsConfig config, Graphics2D graphics, double iconScale, PlacementDirection iconLoc, int iconOffsetX, int iconOffsetY, int outlineSize, int x, int y, int barWidth, int barHeight )
     {
         final Image icon = iconSupplier.get();

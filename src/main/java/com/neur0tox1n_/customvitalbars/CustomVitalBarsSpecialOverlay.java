@@ -101,7 +101,7 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
             specialPercentage = millisecondsSinceSpecRegen / millisecondsPerSpecRegen;
         }
 
-        if ( config.hideWhenSidebarPanelClosed() ) {
+        if ( config.hideSpecialWhenSidebarPanelClosed() ) {
             Viewport curViewport = null;
             Widget curWidget = null;
 
@@ -119,9 +119,9 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
             }
         }
 
-        if ( plugin.isBarsDisplayed() && config.renderSpecial() && !uiElementsOpen )
+        if ( plugin.isSpecialDisplayed() && config.renderSpecial() && !uiElementsOpen )
         {
-            barRenderer.renderBar( config, g, panelComponent, Vital.SPECIAL_ENERGY, false );
+            barRenderer.renderBar( config, g, panelComponent, Vital.SPECIAL_ENERGY, false, client );
 
             return config.specialSize();
         }

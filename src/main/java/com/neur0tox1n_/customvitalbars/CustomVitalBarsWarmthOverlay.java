@@ -130,7 +130,7 @@ public class CustomVitalBarsWarmthOverlay extends OverlayPanel
             warmthRegenerationPercentage = 0;
         }
 
-        if ( config.hideWhenSidebarPanelClosed() ) {
+        if ( config.hideWarmthWhenSidebarPanelClosed() ) {
             Viewport curViewport = null;
             Widget curWidget = null;
 
@@ -148,9 +148,9 @@ public class CustomVitalBarsWarmthOverlay extends OverlayPanel
             }
         }
 
-        if ( ((config.warmthWintertodtDynamicOverride() && isInWintertodtRegion()) || config.renderWarmth()) && plugin.isBarsDisplayed() && !uiElementsOpen )
+        if ( ((config.renderWarmthWithOptions() == WarmthRenderOptions.SHOW_DYNAMICALLY && isInWintertodtRegion()) || config.renderWarmthWithOptions() == WarmthRenderOptions.SHOW_ALWAYS) && plugin.isWarmthDisplayed() && !uiElementsOpen )
         {
-            barRenderer.renderBar( config, g, panelComponent, Vital.WARMTH, false );
+            barRenderer.renderBar( config, g, panelComponent, Vital.WARMTH, false, client );
             return config.warmthSize();
         }
 
