@@ -235,16 +235,14 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
             final Widget viewportWidget = client.getWidget(viewport.getViewport());
             if ( viewportWidget != null )
             {
-                final net.runelite.api.Point location = viewportWidget.getCanvasLocation();
-                lastKnownSidebarX = location.getX();
-                lastKnownSidebarY = location.getY();
-                configManager.setConfiguration( "Custom Vital Bars", "debugSidebarPanelX", lastKnownSidebarX );
-                configManager.setConfiguration( "Custom Vital Bars", "debugSidebarPanelY", lastKnownSidebarY );
-
                 if ( !viewportWidget.isHidden() )
                 {
                     curViewport = viewport;
                     curWidget = viewportWidget;
+
+                    final net.runelite.api.Point location = viewportWidget.getCanvasLocation();
+                    lastKnownSidebarX = location.getX();
+                    lastKnownSidebarY = location.getY();
 
                     break;
                 }

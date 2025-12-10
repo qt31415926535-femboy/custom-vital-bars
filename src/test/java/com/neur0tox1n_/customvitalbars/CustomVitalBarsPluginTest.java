@@ -1,8 +1,9 @@
-package com.neur0tox1n_.customvitalbars;
+package net.runelite.client.plugins.customvitalbars.src.test.java.com.neur0tox1n_.customvitalbars;
 
 
 import net.runelite.client.RuneLite;
 import net.runelite.client.externalplugins.ExternalPluginManager;
+import com.neur0tox1n_.customvitalbars.CustomVitalBarsPlugin;
 
 public class CustomVitalBarsPluginTest
 {

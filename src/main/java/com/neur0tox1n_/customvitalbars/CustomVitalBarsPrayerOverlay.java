@@ -87,6 +87,8 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
     private double deltaX = 0, deltaY = 0;
     private double lastKnownSidebarX = 0, lastKnownSidebarY = 0;
 
+    private int lastPrayerValue = 0;
+
     @Inject
     private OverlayManager overlayManager;
 
@@ -183,14 +185,14 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
             final Widget viewportWidget = client.getWidget(viewport.getViewport());
             if ( viewportWidget != null )
             {
-                final net.runelite.api.Point location = viewportWidget.getCanvasLocation();
-                lastKnownSidebarX = location.getX();
-                lastKnownSidebarY = location.getY();
-
                 if ( !viewportWidget.isHidden() )
                 {
                     curViewport = viewport;
                     curWidget = viewportWidget;
+
+                    final net.runelite.api.Point location = viewportWidget.getCanvasLocation();
+                    lastKnownSidebarX = location.getX();
+                    lastKnownSidebarY = location.getY();
 
                     break;
                 }
@@ -286,12 +288,23 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
         {
             if ( isAnyPrayerActive() )
             {
-                double _prayerTimeCost = getCurrentPrayerTimeCost();
+                if ( lastPrayerValue != client.getBoostedSkillLevel(Skill.PRAYER) )
+                {
+                    elapsedPrayerTimeInTicks = 0;
+                    elapsedPrayerTimeInMilliseconds = 0;
 
-                elapsedPrayerTimeInTicks = (elapsedPrayerTimeInTicks + 1) % (_prayerTimeCost / 1000 / 0.6d);
-                elapsedPrayerTimeInMilliseconds = (long)((elapsedPrayerTimeInTicks * 0.6 * 1000) % _prayerTimeCost);
+                    prayerConsumptionRateOrRegeneration = 0;
+                }
+                else
+                {
+                    double _prayerTimeCost = getCurrentPrayerTimeCost();
 
-                prayerConsumptionRateOrRegeneration = 1 - elapsedPrayerTimeInMilliseconds / _prayerTimeCost;
+                    elapsedPrayerTimeInTicks = (elapsedPrayerTimeInTicks + 1) % (_prayerTimeCost / 1000 / 0.6d);
+                    elapsedPrayerTimeInMilliseconds = (long)((elapsedPrayerTimeInTicks * 0.6 * 1000) % _prayerTimeCost);
+
+                    prayerConsumptionRateOrRegeneration = 1 - elapsedPrayerTimeInMilliseconds / _prayerTimeCost;
+                }
+                lastPrayerValue = client.getBoostedSkillLevel(Skill.PRAYER);
             }
             else
             {
