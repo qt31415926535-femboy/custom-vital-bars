@@ -44,6 +44,7 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.itemstats.Effect;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 import net.runelite.client.plugins.itemstats.StatChange;
+import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -86,16 +87,16 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
     private double deltaX = 0, deltaY = 0;
     private double lastKnownSidebarX = 0, lastKnownSidebarY = 0;
 
-    private boolean delayedToggleLock = false;
-
     @Inject
-    private ConfigManager configManager;
+    private OverlayManager overlayManager;
+
+    private final ConfigManager configManager;
 
     @Inject
     private ItemManager itemManager;
 
     @Inject
-    CustomVitalBarsPrayerOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager)
+    CustomVitalBarsPrayerOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager, ConfigManager configManager )
     {
         super(plugin);
 
@@ -111,6 +112,7 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
         this.skillIconManager = skillIconManager;
         this.spriteManager = spriteManager;
         this.itemStatService = itemstatservice;
+        this.configManager = configManager;
 
         lastKnownSidebarX = config.debugSidebarPanelX();
         lastKnownSidebarY = config.debugSidebarPanelY();
@@ -214,6 +216,7 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
                     int newDeltaX = (int) (location.getX() + deltaX);
                     int newDeltaY = (int) (location.getY() + deltaY);
                     this.setPreferredLocation( new java.awt.Point(newDeltaX, newDeltaY) );
+                    overlayManager.saveOverlay( this );
                 }
             }
         }
@@ -409,16 +412,14 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
             {
                 deltaX = this.getPreferredLocation().getX() - lastKnownSidebarX;
                 deltaY = this.getPreferredLocation().getY() - lastKnownSidebarY;
-                configManager.setConfiguration( "Custom Vital Bars", "debugPrayerDeltaX", deltaX );
-                configManager.setConfiguration( "Custom Vital Bars", "debugPrayerDeltaY", deltaY );
             }
         }
         else
         {
             deltaX = 0;
             deltaY = 0;
-            configManager.setConfiguration( "Custom Vital Bars", "debugPrayerDeltaX", 0 );
-            configManager.setConfiguration( "Custom Vital Bars", "debugPrayerDeltaY", 0 );
         }
+        configManager.setConfiguration( "Custom Vital Bars", "debugPrayerDeltaX", (int) deltaX );
+        configManager.setConfiguration( "Custom Vital Bars", "debugPrayerDeltaY", (int) deltaY );
     }
 }

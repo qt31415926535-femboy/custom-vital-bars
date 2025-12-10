@@ -23,6 +23,7 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.itemstats.Effect;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 import net.runelite.client.plugins.itemstats.StatChange;
+import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -78,15 +79,15 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
     private double deltaX = 0, deltaY = 0;
     private double lastKnownSidebarX = 0, lastKnownSidebarY = 0;
 
-    private boolean delayedToggleLock = false;
+    @Inject
+    private OverlayManager overlayManager;
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CustomVitalBarsComponent.class);
 
-    @Inject
-    private ConfigManager configManager;
+    private final ConfigManager configManager;
 
     @Inject
-    CustomVitalBarsHitpointsOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager)
+    CustomVitalBarsHitpointsOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager, ConfigManager configManager )
     {
         super(plugin);
 
@@ -103,6 +104,7 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
         this.skillIconManager = skillIconManager;
         this.spriteManager = spriteManager;
         this.itemStatService = itemstatservice;
+        this.configManager = configManager;
 
         heartDisease = ImageUtil.loadImageResource(AlternateSprites.class, AlternateSprites.DISEASE_HEART);
         heartPoison = ImageUtil.loadImageResource(AlternateSprites.class, AlternateSprites.POISON_HEART);
@@ -268,6 +270,7 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
                     int newDeltaX = (int) (location.getX() + deltaX);
                     int newDeltaY = (int) (location.getY() + deltaY);
                     this.setPreferredLocation( new java.awt.Point(newDeltaX, newDeltaY) );
+                    overlayManager.saveOverlay( this );
                 }
             }
         }
@@ -537,17 +540,15 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
             {
                 deltaX = this.getPreferredLocation().getX() - lastKnownSidebarX;
                 deltaY = this.getPreferredLocation().getY() - lastKnownSidebarY;
-                configManager.setConfiguration( "Custom Vital Bars", "debugHitpointsDeltaX", deltaX );
-                configManager.setConfiguration( "Custom Vital Bars", "debugHitpointsDeltaY", deltaY );
             }
         }
         else
         {
             deltaX = 0;
             deltaY = 0;
-            configManager.setConfiguration( "Custom Vital Bars", "debugHitpointsDeltaX", 0 );
-            configManager.setConfiguration( "Custom Vital Bars", "debugHitpointsDeltaY", 0 );
         }
+        configManager.setConfiguration( "Custom Vital Bars", "debugHitpointsDeltaX", (int) deltaX );
+        configManager.setConfiguration( "Custom Vital Bars", "debugHitpointsDeltaY", (int) deltaY );
     }
 
 }

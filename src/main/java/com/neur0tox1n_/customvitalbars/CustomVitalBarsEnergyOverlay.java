@@ -40,10 +40,7 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.itemstats.Effect;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 import net.runelite.client.plugins.itemstats.StatChange;
-import net.runelite.client.ui.overlay.OverlayLayer;
-import net.runelite.client.ui.overlay.OverlayPanel;
-import net.runelite.client.ui.overlay.OverlayPosition;
-import net.runelite.client.ui.overlay.OverlayPriority;
+import net.runelite.client.ui.overlay.*;
 import net.runelite.client.util.RSTimeUnit;
 
 import javax.inject.Inject;
@@ -149,13 +146,13 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
     private double deltaX = 0, deltaY = 0;
     private double lastKnownSidebarX = 0, lastKnownSidebarY = 0;
 
-    private boolean delayedToggleLock = false;
+    @Inject
+    private OverlayManager overlayManager;
+
+    private final ConfigManager configManager;
 
     @Inject
-    private ConfigManager configManager;
-
-    @Inject
-    CustomVitalBarsEnergyOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager )
+    CustomVitalBarsEnergyOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager, ConfigManager configManager  )
     {
         super(plugin);
 
@@ -171,6 +168,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
         this.skillIconManager = skillIconManager;
         this.spriteManager = spriteManager;
         this.itemStatService = itemstatservice;
+        this.configManager = configManager;
 
         lastKnownSidebarX = config.debugSidebarPanelX();
         lastKnownSidebarY = config.debugSidebarPanelY();
@@ -312,6 +310,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
                     int newDeltaX = (int) (location.getX() + deltaX);
                     int newDeltaY = (int) (location.getY() + deltaY);
                     this.setPreferredLocation( new java.awt.Point(newDeltaX, newDeltaY) );
+                    overlayManager.saveOverlay( this );
                 }
             }
         }
@@ -554,16 +553,14 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
             {
                 deltaX = this.getPreferredLocation().getX() - lastKnownSidebarX;
                 deltaY = this.getPreferredLocation().getY() - lastKnownSidebarY;
-                configManager.setConfiguration( "Custom Vital Bars", "debugEnergyDeltaX", deltaX );
-                configManager.setConfiguration( "Custom Vital Bars", "debugEnergyDeltaY", deltaY );
             }
         }
         else
         {
             deltaX = 0;
             deltaY = 0;
-            configManager.setConfiguration( "Custom Vital Bars", "debugEnergyDeltaX", 0 );
-            configManager.setConfiguration( "Custom Vital Bars", "debugEnergyDeltaY", 0 );
         }
+        configManager.setConfiguration( "Custom Vital Bars", "debugEnergyDeltaX", (int) deltaX );
+        configManager.setConfiguration( "Custom Vital Bars", "debugEnergyDeltaY", (int) deltaY );
     }
 }

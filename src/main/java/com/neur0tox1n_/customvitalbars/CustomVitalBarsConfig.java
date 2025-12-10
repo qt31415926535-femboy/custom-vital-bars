@@ -1072,110 +1072,110 @@ public interface CustomVitalBarsConfig extends Config
     String debugSection = "debugSection";
 
     @ConfigItem(
-            position = 103,
+            position = 104,
             keyName = "debugSidebarPanelX",
             name = "debugSidebarPanelX",
-            description = "don't touch me please!",
+            description = "debugSidebarPanelX",
             section = debugSection
     )
-    default double debugSidebarPanelX() { return 0.0d; }
-
-    @ConfigItem(
-            position = 104,
-            keyName = "debugSidebarPanelY",
-            name = "debugSidebarPanelY",
-            description = "please don't modify me!",
-            section = debugSection
-    )
-    default double debugSidebarPanelY() { return 0.0d; }
+    default int debugSidebarPanelX() { return 0; }
 
     @ConfigItem(
             position = 105,
-            keyName = "debugEnergyDeltaX",
-            name = "debugEnergyDeltaX",
-            description = "don't touch me please!",
+            keyName = "debugSidebarPanelY",
+            name = "debugSidebarPanelY",
+            description = "debugSidebarPanelY",
             section = debugSection
     )
-    default double debugEnergyDeltaX() { return 0.0d; }
+    default int debugSidebarPanelY() { return 0; }
 
     @ConfigItem(
             position = 106,
-            keyName = "debugEnergyDeltaY",
-            name = "debugEnergyDeltaY",
-            description = "please don't modify me!",
+            keyName = "debugEnergyDeltaX",
+            name = "debugEnergyDeltaX",
+            description = "debugEnergyDeltaX",
             section = debugSection
     )
-    default double debugEnergyDeltaY() { return 0.0d; }
+    default int debugEnergyDeltaX() { return 0; }
 
     @ConfigItem(
             position = 107,
-            keyName = "debugHitpointsDeltaX",
-            name = "debugHitpointsDeltaX",
-            description = "don't touch me please!",
+            keyName = "debugEnergyDeltaY",
+            name = "debugEnergyDeltaY",
+            description = "debugEnergyDeltaY",
             section = debugSection
     )
-    default double debugHitpointsDeltaX() { return 0.0d; }
+    default int debugEnergyDeltaY() { return 0; }
 
     @ConfigItem(
             position = 108,
-            keyName = "debugHitpointsDeltaY",
-            name = "debugHitpointsDeltaY",
-            description = "please don't modify me!",
+            keyName = "debugHitpointsDeltaX",
+            name = "debugHitpointsDeltaX",
+            description = "debugHitpointsDeltaX",
             section = debugSection
     )
-    default double debugHitpointsDeltaY() { return 0.0d; }
+    default int debugHitpointsDeltaX() { return 0; }
 
     @ConfigItem(
             position = 109,
-            keyName = "debugPrayerDeltaX",
-            name = "debugPrayerDeltaX",
-            description = "don't touch me please!",
+            keyName = "debugHitpointsDeltaY",
+            name = "debugHitpointsDeltaY",
+            description = "debugHitpointsDeltaY",
             section = debugSection
     )
-    default double debugPrayerDeltaX() { return 0.0d; }
+    default int debugHitpointsDeltaY() { return 0; }
 
     @ConfigItem(
             position = 110,
-            keyName = "debugPrayerDeltaY",
-            name = "debugPrayerDeltaY",
-            description = "please don't modify me!",
+            keyName = "debugPrayerDeltaX",
+            name = "debugPrayerDeltaX",
+            description = "debugPrayerDeltaX",
             section = debugSection
     )
-    default double debugPrayerDeltaY() { return 0.0d; }
+    default int debugPrayerDeltaX() { return 0; }
 
     @ConfigItem(
             position = 111,
-            keyName = "debugSpecialDeltaX",
-            name = "debugSpecialDeltaX",
-            description = "don't touch me please!",
+            keyName = "debugPrayerDeltaY",
+            name = "debugPrayerDeltaY",
+            description = "debugPrayerDeltaY",
             section = debugSection
     )
-    default double debugSpecialDeltaX() { return 0.0d; }
+    default int debugPrayerDeltaY() { return 0; }
 
     @ConfigItem(
             position = 112,
-            keyName = "debugSpecialDeltaY",
-            name = "debugSpecialDeltaY",
-            description = "please don't modify me!",
+            keyName = "debugSpecialDeltaX",
+            name = "debugSpecialDeltaX",
+            description = "debugSpecialDeltaX",
             section = debugSection
     )
-    default double debugSpecialDeltaY() { return 0.0d; }
+    default int debugSpecialDeltaX() { return 0; }
 
     @ConfigItem(
             position = 113,
-            keyName = "debugWarmthDeltaX",
-            name = "debugWarmthDeltaX",
-            description = "don't touch me please!",
+            keyName = "debugSpecialDeltaY",
+            name = "debugSpecialDeltaY",
+            description = "debugSpecialDeltaY",
             section = debugSection
     )
-    default double debugWarmthDeltaX() { return 0.0d; }
+    default int debugSpecialDeltaY() { return 0; }
 
     @ConfigItem(
             position = 114,
-            keyName = "debugWarmthDeltaY",
-            name = "debugWarmthDeltaY",
-            description = "please don't modify me!",
+            keyName = "debugWarmthDeltaX",
+            name = "debugWarmthDeltaX",
+            description = "debugWarmthDeltaX",
             section = debugSection
     )
-    default double debugWarmthDeltaY() { return 0.0d; }
+    default int debugWarmthDeltaX() { return 0; }
+
+    @ConfigItem(
+            position = 115,
+            keyName = "debugWarmthDeltaY",
+            name = "debugWarmthDeltaY",
+            description = "debugWarmthDeltaY",
+            section = debugSection
+    )
+    default int debugWarmthDeltaY() { return 0; }
 }
