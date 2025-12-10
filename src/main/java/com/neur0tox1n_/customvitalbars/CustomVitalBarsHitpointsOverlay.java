@@ -3,7 +3,6 @@
 package com.neur0tox1n_.customvitalbars;
 
 import java.awt.*;
-import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,9 +10,11 @@ import javax.inject.Inject;
 
 import lombok.Getter;
 import net.runelite.api.*;
+import net.runelite.api.Point;
 import net.runelite.api.events.*;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.AlternateSprites;
@@ -74,7 +75,15 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
     private final Map<Integer, Integer> previousInventory = new HashMap<>();
     private boolean isEating = false;
 
-    public int x = 0, y = 0;
+    private double deltaX = 0, deltaY = 0;
+    private double lastKnownSidebarX = 0, lastKnownSidebarY = 0;
+
+    private boolean delayedToggleLock = false;
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CustomVitalBarsComponent.class);
+
+    @Inject
+    private ConfigManager configManager;
 
     @Inject
     CustomVitalBarsHitpointsOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager)
@@ -99,7 +108,15 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
         heartPoison = ImageUtil.loadImageResource(AlternateSprites.class, AlternateSprites.POISON_HEART);
         heartVenom = ImageUtil.loadImageResource(AlternateSprites.class, AlternateSprites.VENOM_HEART);
 
+        lastKnownSidebarX = config.debugSidebarPanelX();
+        lastKnownSidebarY = config.debugSidebarPanelY();
+
         initRenderer();
+
+        if ( config.hitpointsRelativeToInventory() )
+        {
+            toggleLock( true );
+        }
     }
 
     private void initRenderer()
@@ -208,24 +225,50 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
             hitpointsRecoveryPercentage = millisecondsToDelayedRecovery / (double) millisecondsToHPRecovery;
         }
 
-        if ( config.hideHitpointsWhenSidebarPanelClosed() )
-        {
-            Viewport curViewport = null;
-            Widget curWidget = null;
+        Viewport curViewport = null;
+        Widget curWidget = null;
 
-            for (Viewport viewport : Viewport.values())
+        for (Viewport viewport : Viewport.values())
+        {
+            final Widget viewportWidget = client.getWidget(viewport.getViewport());
+            if ( viewportWidget != null )
             {
-                final Widget viewportWidget = client.getWidget(viewport.getViewport());
-                if (viewportWidget != null && !viewportWidget.isHidden()) {
+                final net.runelite.api.Point location = viewportWidget.getCanvasLocation();
+                lastKnownSidebarX = location.getX();
+                lastKnownSidebarY = location.getY();
+                configManager.setConfiguration( "Custom Vital Bars", "debugSidebarPanelX", lastKnownSidebarX );
+                configManager.setConfiguration( "Custom Vital Bars", "debugSidebarPanelY", lastKnownSidebarY );
+
+                if ( !viewportWidget.isHidden() )
+                {
                     curViewport = viewport;
                     curWidget = viewportWidget;
+
                     break;
                 }
             }
+        }
 
+        if ( config.hideHitpointsWhenSidebarPanelClosed() )
+        {
             if (curViewport == null)
             {
                 return null;
+            }
+        }
+
+        if ( config.hitpointsRelativeToInventory() )
+        {
+            if (curViewport != null)
+            {
+                final net.runelite.api.Point location = curWidget.getCanvasLocation();
+
+                if ( deltaX != 0 && deltaY != 0 )
+                {
+                    int newDeltaX = (int) (location.getX() + deltaX);
+                    int newDeltaY = (int) (location.getY() + deltaY);
+                    this.setPreferredLocation( new java.awt.Point(newDeltaX, newDeltaY) );
+                }
             }
         }
 
@@ -280,6 +323,7 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
     }
 
 
+    @Subscribe
     public void onGameStateChanged( GameStateChanged ev )
     {
         if ( ev.getGameState() == GameState.HOPPING || ev.getGameState() == GameState.LOGIN_SCREEN )
@@ -295,6 +339,7 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
         }
     }
 
+    @Subscribe
     public void onVarbitChanged(VarbitChanged ev)
     {
         if (ev.getVarbitId() == Varbits.PRAYER_RAPID_HEAL)
@@ -477,6 +522,32 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
 
         ticksToDelayedRecovery = item.getTickDelay();
         initialTicksToDelayedRecovery = item.getTickDelay();
+    }
+
+    public void toggleLock( boolean start )
+    {
+        if ( deltaX == 0 && deltaY == 0 )
+        {
+            if ( start )
+            {
+                deltaX = config.debugHitpointsDeltaX();
+                deltaY = config.debugHitpointsDeltaY();
+            }
+            else
+            {
+                deltaX = this.getPreferredLocation().getX() - lastKnownSidebarX;
+                deltaY = this.getPreferredLocation().getY() - lastKnownSidebarY;
+                configManager.setConfiguration( "Custom Vital Bars", "debugHitpointsDeltaX", deltaX );
+                configManager.setConfiguration( "Custom Vital Bars", "debugHitpointsDeltaY", deltaY );
+            }
+        }
+        else
+        {
+            deltaX = 0;
+            deltaY = 0;
+            configManager.setConfiguration( "Custom Vital Bars", "debugHitpointsDeltaX", 0 );
+            configManager.setConfiguration( "Custom Vital Bars", "debugHitpointsDeltaY", 0 );
+        }
     }
 
 }

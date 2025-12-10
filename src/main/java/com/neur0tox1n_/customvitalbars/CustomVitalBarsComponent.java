@@ -81,12 +81,6 @@ class CustomVitalBarsComponent
     private int pulseColourIncrement = 3;
 
     int initialX = 200, initialY = 200;
-    int lastKnownInitialX = 200, lastKnownInitialY = 200;
-
-    private static final int RESIZED_BOTTOM_OFFSET_Y = 9;
-    private static final int RESIZED_BOTTOM_OFFSET_X = 201;
-
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CustomVitalBarsComponent.class);
 
     private PanelComponent boundingBox =  null;
 
@@ -221,39 +215,6 @@ class CustomVitalBarsComponent
         {
             initialX = component.getBounds().x;
             initialY = component.getBounds().y;
-        }
-
-        if ( lockRelativeToInventory )
-        {
-            Viewport curViewport = null;
-            Widget curWidget = null;
-
-            for (Viewport viewport : Viewport.values())
-            {
-                final Widget viewportWidget = client.getWidget(viewport.getViewport());
-                if (viewportWidget != null && !viewportWidget.isHidden())
-                {
-                    curViewport = viewport;
-                    curWidget = viewportWidget;
-                    break;
-                }
-            }
-
-            if (curViewport != null)
-            {
-                final net.runelite.api.Point location = curWidget.getCanvasLocation();
-
-                initialX = location.getX() - client.getViewportWidth() + RESIZED_BOTTOM_OFFSET_X;
-                initialY = location.getY() - client.getViewportHeight() / 2 - RESIZED_BOTTOM_OFFSET_Y;
-
-                lastKnownInitialX = initialX;
-                lastKnownInitialY = initialY;
-            }
-            else if ( curViewport == null )
-            {
-               initialX = lastKnownInitialX;
-               initialY = lastKnownInitialY;
-            }
         }
 
         if ( outlineThickness > 0 )
@@ -616,5 +577,4 @@ class CustomVitalBarsComponent
                 11
         );
     }
-
 }

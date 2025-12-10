@@ -32,6 +32,7 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemVariationMapping;
 import net.runelite.client.game.SkillIconManager;
@@ -145,9 +146,16 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
     private final SkillIconManager skillIconManager;
     private final SpriteManager spriteManager;
 
+    private double deltaX = 0, deltaY = 0;
+    private double lastKnownSidebarX = 0, lastKnownSidebarY = 0;
+
+    private boolean delayedToggleLock = false;
 
     @Inject
-    CustomVitalBarsEnergyOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager)
+    private ConfigManager configManager;
+
+    @Inject
+    CustomVitalBarsEnergyOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager )
     {
         super(plugin);
 
@@ -164,7 +172,15 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
         this.spriteManager = spriteManager;
         this.itemStatService = itemstatservice;
 
+        lastKnownSidebarX = config.debugSidebarPanelX();
+        lastKnownSidebarY = config.debugSidebarPanelY();
+
         initRenderer();
+
+        if ( config.energyRelativeToInventory() )
+        {
+            toggleLock( true );
+        }
     }
 
     private void initRenderer()
@@ -253,21 +269,50 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 
          */
 
-        if ( config.hideEnergyWhenSidebarPanelClosed() ) {
-            Viewport curViewport = null;
-            Widget curWidget = null;
+        Viewport curViewport = null;
+        Widget curWidget = null;
 
-            for (Viewport viewport : Viewport.values()) {
-                final Widget viewportWidget = client.getWidget(viewport.getViewport());
-                if (viewportWidget != null && !viewportWidget.isHidden()) {
+        for (Viewport viewport : Viewport.values())
+        {
+            final Widget viewportWidget = client.getWidget(viewport.getViewport());
+            if ( viewportWidget != null )
+            {
+                final net.runelite.api.Point location = viewportWidget.getCanvasLocation();
+                lastKnownSidebarX = location.getX();
+                lastKnownSidebarY = location.getY();
+                configManager.setConfiguration( "Custom Vital Bars", "debugSidebarPanelX", lastKnownSidebarX );
+                configManager.setConfiguration( "Custom Vital Bars", "debugSidebarPanelY", lastKnownSidebarY );
+
+                if ( !viewportWidget.isHidden() )
+                {
                     curViewport = viewport;
                     curWidget = viewportWidget;
+
                     break;
                 }
             }
+        }
 
-            if (curViewport == null) {
+        if ( config.hideEnergyWhenSidebarPanelClosed() )
+        {
+            if (curViewport == null)
+            {
                 return null;
+            }
+        }
+
+        if ( config.energyRelativeToInventory() )
+        {
+            if (curViewport != null)
+            {
+                final net.runelite.api.Point location = curWidget.getCanvasLocation();
+
+                if ( deltaX != 0 && deltaY != 0 )
+                {
+                    int newDeltaX = (int) (location.getX() + deltaX);
+                    int newDeltaY = (int) (location.getY() + deltaY);
+                    this.setPreferredLocation( new java.awt.Point(newDeltaX, newDeltaY) );
+                }
             }
         }
 
@@ -494,5 +539,31 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
     private void removeVarTimer( GameTimer gameTimer )
     {
         varTimers.remove( gameTimer );
+    }
+
+    public void toggleLock( boolean start )
+    {
+        if ( deltaX == 0 && deltaY == 0 )
+        {
+            if ( start )
+            {
+                deltaX = config.debugEnergyDeltaX();
+                deltaY = config.debugEnergyDeltaY();
+            }
+            else
+            {
+                deltaX = this.getPreferredLocation().getX() - lastKnownSidebarX;
+                deltaY = this.getPreferredLocation().getY() - lastKnownSidebarY;
+                configManager.setConfiguration( "Custom Vital Bars", "debugEnergyDeltaX", deltaX );
+                configManager.setConfiguration( "Custom Vital Bars", "debugEnergyDeltaY", deltaY );
+            }
+        }
+        else
+        {
+            deltaX = 0;
+            deltaY = 0;
+            configManager.setConfiguration( "Custom Vital Bars", "debugEnergyDeltaX", 0 );
+            configManager.setConfiguration( "Custom Vital Bars", "debugEnergyDeltaY", 0 );
+        }
     }
 }

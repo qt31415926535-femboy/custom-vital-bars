@@ -106,6 +106,7 @@ public class CustomVitalBarsPlugin extends Plugin
 	private int lastCombatActionTickCount;
 
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CustomVitalBarsComponent.class);
 
 	@Override
 	protected void startUp() throws Exception
@@ -180,10 +181,34 @@ public class CustomVitalBarsPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		if (CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("hideAfterCombatDelay")) {
-			clientThread.invokeLater(this::checkCustomVitalBars);
+		if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().contains( "AfterCombatDelay" ) )
+        {
+			clientThread.invokeLater( this::checkCustomVitalBars );
 		}
-		hideWhenBigUIOpen = config.hideWhenLargeInterfacePanelsOpen();
+        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("hideWhenLargeInterfacePanelsOpen") )
+        {
+            hideWhenBigUIOpen = config.hideWhenLargeInterfacePanelsOpen();
+        }
+        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("hitpointsRelativeToSidebarPanel") )
+        {
+            healthOverlay.toggleLock( false );
+        }
+        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("specialRelativeToSidebarPanel") )
+        {
+            specialOverlay.toggleLock( false );
+        }
+        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("prayerRelativeToSidebarPanel") )
+        {
+            prayerOverlay.toggleLock( false );
+        }
+        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("energyRelativeToSidebarPanel") )
+        {
+            energyOverlay.toggleLock( false );
+        }
+        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("warmthRelativeToSidebarPanel") )
+        {
+            warmthOverlay.toggleLock( false );
+        }
 	}
 
 	@Subscribe

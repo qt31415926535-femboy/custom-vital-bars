@@ -35,6 +35,7 @@ import net.runelite.api.*;
 import net.runelite.api.events.*;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStats;
@@ -82,6 +83,14 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
     private final SkillIconManager skillIconManager;
     private final SpriteManager spriteManager;
 
+    private double deltaX = 0, deltaY = 0;
+    private double lastKnownSidebarX = 0, lastKnownSidebarY = 0;
+
+    private boolean delayedToggleLock = false;
+
+    @Inject
+    private ConfigManager configManager;
+
     @Inject
     private ItemManager itemManager;
 
@@ -103,7 +112,15 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
         this.spriteManager = spriteManager;
         this.itemStatService = itemstatservice;
 
+        lastKnownSidebarX = config.debugSidebarPanelX();
+        lastKnownSidebarY = config.debugSidebarPanelY();
+
         initRenderer();
+
+        if ( config.prayerRelativeToInventory() )
+        {
+            toggleLock( true );
+        }
     }
 
     private void initRenderer()
@@ -156,21 +173,48 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
             prayerConsumptionRateOrRegeneration = (double)elapsedPrayerTimeInMilliseconds / PRAYER_REGENERATION_INTERVAL_MILLISECONDS;
         }
 
-        if ( config.hidePrayerWhenSidebarPanelClosed() ) {
-            Viewport curViewport = null;
-            Widget curWidget = null;
+        Viewport curViewport = null;
+        Widget curWidget = null;
 
-            for (Viewport viewport : Viewport.values()) {
-                final Widget viewportWidget = client.getWidget(viewport.getViewport());
-                if (viewportWidget != null && !viewportWidget.isHidden()) {
+        for (Viewport viewport : Viewport.values())
+        {
+            final Widget viewportWidget = client.getWidget(viewport.getViewport());
+            if ( viewportWidget != null )
+            {
+                final net.runelite.api.Point location = viewportWidget.getCanvasLocation();
+                lastKnownSidebarX = location.getX();
+                lastKnownSidebarY = location.getY();
+
+                if ( !viewportWidget.isHidden() )
+                {
                     curViewport = viewport;
                     curWidget = viewportWidget;
+
                     break;
                 }
             }
+        }
 
-            if (curViewport == null) {
+        if ( config.hidePrayerWhenSidebarPanelClosed() )
+        {
+            if (curViewport == null)
+            {
                 return null;
+            }
+        }
+
+        if ( config.prayerRelativeToInventory() )
+        {
+            if (curViewport != null)
+            {
+                final net.runelite.api.Point location = curWidget.getCanvasLocation();
+
+                if ( deltaX != 0 && deltaY != 0 )
+                {
+                    int newDeltaX = (int) (location.getX() + deltaX);
+                    int newDeltaY = (int) (location.getY() + deltaY);
+                    this.setPreferredLocation( new java.awt.Point(newDeltaX, newDeltaY) );
+                }
             }
         }
 
@@ -350,5 +394,31 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
     private BufferedImage loadSprite(int spriteId)
     {
         return spriteManager.getSprite(spriteId, 0);
+    }
+
+    public void toggleLock( boolean start )
+    {
+        if ( deltaX == 0 && deltaY == 0 )
+        {
+            if ( start )
+            {
+                deltaX = config.debugPrayerDeltaX();
+                deltaY = config.debugPrayerDeltaY();
+            }
+            else
+            {
+                deltaX = this.getPreferredLocation().getX() - lastKnownSidebarX;
+                deltaY = this.getPreferredLocation().getY() - lastKnownSidebarY;
+                configManager.setConfiguration( "Custom Vital Bars", "debugPrayerDeltaX", deltaX );
+                configManager.setConfiguration( "Custom Vital Bars", "debugPrayerDeltaY", deltaY );
+            }
+        }
+        else
+        {
+            deltaX = 0;
+            deltaY = 0;
+            configManager.setConfiguration( "Custom Vital Bars", "debugPrayerDeltaX", 0 );
+            configManager.setConfiguration( "Custom Vital Bars", "debugPrayerDeltaY", 0 );
+        }
     }
 }

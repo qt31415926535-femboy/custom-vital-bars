@@ -8,7 +8,7 @@ import java.awt.*;
 @ConfigGroup("Custom Vital Bars")
 public interface CustomVitalBarsConfig extends Config
 {
-	String GROUP = "vitalbars";
+	String GROUP = "Custom Vital Bars";
 
 	@ConfigItem(
 			position = 1,
@@ -1063,4 +1063,119 @@ public interface CustomVitalBarsConfig extends Config
 			description = "Whether or not to hide the vital bars when large UI elements are open (ie Bank, Clue Scroll text)"
 	)
 	default boolean hideWhenLargeInterfacePanelsOpen() { return true; }
+
+    @ConfigSection(
+            position = 103,
+            name = "DEBUG",
+            description = "various debug config variables to store coordinate data. please don't touch!"
+    )
+    String debugSection = "debugSection";
+
+    @ConfigItem(
+            position = 103,
+            keyName = "debugSidebarPanelX",
+            name = "debugSidebarPanelX",
+            description = "don't touch me please!",
+            section = debugSection
+    )
+    default double debugSidebarPanelX() { return 0.0d; }
+
+    @ConfigItem(
+            position = 104,
+            keyName = "debugSidebarPanelY",
+            name = "debugSidebarPanelY",
+            description = "please don't modify me!",
+            section = debugSection
+    )
+    default double debugSidebarPanelY() { return 0.0d; }
+
+    @ConfigItem(
+            position = 105,
+            keyName = "debugEnergyDeltaX",
+            name = "debugEnergyDeltaX",
+            description = "don't touch me please!",
+            section = debugSection
+    )
+    default double debugEnergyDeltaX() { return 0.0d; }
+
+    @ConfigItem(
+            position = 106,
+            keyName = "debugEnergyDeltaY",
+            name = "debugEnergyDeltaY",
+            description = "please don't modify me!",
+            section = debugSection
+    )
+    default double debugEnergyDeltaY() { return 0.0d; }
+
+    @ConfigItem(
+            position = 107,
+            keyName = "debugHitpointsDeltaX",
+            name = "debugHitpointsDeltaX",
+            description = "don't touch me please!",
+            section = debugSection
+    )
+    default double debugHitpointsDeltaX() { return 0.0d; }
+
+    @ConfigItem(
+            position = 108,
+            keyName = "debugHitpointsDeltaY",
+            name = "debugHitpointsDeltaY",
+            description = "please don't modify me!",
+            section = debugSection
+    )
+    default double debugHitpointsDeltaY() { return 0.0d; }
+
+    @ConfigItem(
+            position = 109,
+            keyName = "debugPrayerDeltaX",
+            name = "debugPrayerDeltaX",
+            description = "don't touch me please!",
+            section = debugSection
+    )
+    default double debugPrayerDeltaX() { return 0.0d; }
+
+    @ConfigItem(
+            position = 110,
+            keyName = "debugPrayerDeltaY",
+            name = "debugPrayerDeltaY",
+            description = "please don't modify me!",
+            section = debugSection
+    )
+    default double debugPrayerDeltaY() { return 0.0d; }
+
+    @ConfigItem(
+            position = 111,
+            keyName = "debugSpecialDeltaX",
+            name = "debugSpecialDeltaX",
+            description = "don't touch me please!",
+            section = debugSection
+    )
+    default double debugSpecialDeltaX() { return 0.0d; }
+
+    @ConfigItem(
+            position = 112,
+            keyName = "debugSpecialDeltaY",
+            name = "debugSpecialDeltaY",
+            description = "please don't modify me!",
+            section = debugSection
+    )
+    default double debugSpecialDeltaY() { return 0.0d; }
+
+    @ConfigItem(
+            position = 113,
+            keyName = "debugWarmthDeltaX",
+            name = "debugWarmthDeltaX",
+            description = "don't touch me please!",
+            section = debugSection
+    )
+    default double debugWarmthDeltaX() { return 0.0d; }
+
+    @ConfigItem(
+            position = 114,
+            keyName = "debugWarmthDeltaY",
+            name = "debugWarmthDeltaY",
+            description = "please don't modify me!",
+            section = debugSection
+    )
+    default double debugWarmthDeltaY() { return 0.0d; }
 }
