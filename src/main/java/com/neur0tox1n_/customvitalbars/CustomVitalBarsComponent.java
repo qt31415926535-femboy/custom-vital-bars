@@ -273,7 +273,7 @@ class CustomVitalBarsComponent
         {
             filledHeight = getBarSize( maxValue, currentValue, height );
             filledWidth = width;
-            eY -= height - filledHeight;
+            eY += height - filledHeight;
         }
         else if ( dir == FullnessDirection.BOTTOM )
         {
@@ -282,7 +282,7 @@ class CustomVitalBarsComponent
         }
         else if ( dir == FullnessDirection.LEFT )
         {
-            eX -= width - filledWidth;
+            eX += width - filledWidth;
         }
 
         //final Color fill = colorSupplier.get();
@@ -616,4 +616,5 @@ class CustomVitalBarsComponent
                 11
         );
     }
+
 }
