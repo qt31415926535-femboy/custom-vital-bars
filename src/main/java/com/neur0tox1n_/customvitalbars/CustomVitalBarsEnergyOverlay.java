@@ -146,6 +146,8 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
     private double deltaX = 0, deltaY = 0;
     private double lastKnownSidebarX = 0, lastKnownSidebarY = 0;
 
+    private int lastEnergyValue = 0;
+
     @Inject
     private OverlayManager overlayManager;
 
@@ -416,41 +418,59 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
             regenAlreadyStarted = true;
         }
 
-        if (localPlayerRunningToDestination) {
+        if ( localPlayerRunningToDestination )
+        {
             ticksSinceRunEnergyRegen = 0;
             millisecondsSinceRunEnergyRegen = 0;
             runEnergyRegenerationPercentage = 0;
 
             regenAlreadyStarted = false;
-        } else {
+        }
+        else
+        {
             int currentRunEnergy = client.getEnergy();
-            if (currentRunEnergy == MAX_RUN_ENERGY_VALUE * 100) {
+            if ( currentRunEnergy == MAX_RUN_ENERGY_VALUE * 100 )
+            {
                 nextHighestRunEnergyMark = 0;
-                if (config.energyOutlineProgressThreshold() == OutlineProgressThreshold.RELATED_STAT_AT_MAX) {
+                if ( config.energyOutlineProgressThreshold() == OutlineProgressThreshold.RELATED_STAT_AT_MAX )
+                {
                     runEnergyRegenerationPercentage = 0;
                 }
             }
-            if (currentRunEnergy >= nextHighestRunEnergyMark) {
-                int rawRunEnergyRegenPerTick = (int) Math.floor((1 + (getGracefulRecoveryBoost() / 100.0d)) * (Math.floor(client.getBoostedSkillLevel(Skill.AGILITY) / 10.0d) + 15));
-
-                nextHighestRunEnergyMark = ((currentRunEnergy + 99) / 100) * 100;
-
-                ticksToRunEnergyRegen = (int) (Math.ceil((nextHighestRunEnergyMark - currentRunEnergy) / (double) rawRunEnergyRegenPerTick));
-                millisecondsToRunEnergyRegen = (long) (ticksToRunEnergyRegen * 0.6 * 1000);
-
-                ticksSinceRunEnergyRegen = 0;
-                millisecondsSinceRunEnergyRegen = 0;
-                runEnergyRegenerationPercentage = 0;
-            } else {
-                if (ticksToRunEnergyRegen > 0) {
-                    ticksSinceRunEnergyRegen = (ticksSinceRunEnergyRegen + 1) % ticksToRunEnergyRegen;
-                    millisecondsSinceRunEnergyRegen = (long) (ticksSinceRunEnergyRegen * 0.6 * 1000);
-                    runEnergyRegenerationPercentage = ticksSinceRunEnergyRegen / (double) ticksToRunEnergyRegen;
-                } else {
+            else
+            {
+                if ( lastEnergyValue != client.getEnergy() / 100 )
+                {
                     ticksSinceRunEnergyRegen = 0;
                     millisecondsSinceRunEnergyRegen = 0;
                     runEnergyRegenerationPercentage = 0;
                 }
+                else
+                {
+                    if (currentRunEnergy >= nextHighestRunEnergyMark) {
+                        int rawRunEnergyRegenPerTick = (int) Math.floor((1 + (getGracefulRecoveryBoost() / 100.0d)) * (Math.floor(client.getBoostedSkillLevel(Skill.AGILITY) / 10.0d) + 15));
+
+                        nextHighestRunEnergyMark = ((currentRunEnergy + 99) / 100) * 100;
+
+                        ticksToRunEnergyRegen = (int) (Math.ceil((nextHighestRunEnergyMark - currentRunEnergy) / (double) rawRunEnergyRegenPerTick / 3.0d));
+                        millisecondsToRunEnergyRegen = (long) (ticksToRunEnergyRegen * 0.6 * 1000);
+
+                        ticksSinceRunEnergyRegen = 0;
+                        millisecondsSinceRunEnergyRegen = 0;
+                        runEnergyRegenerationPercentage = 0;
+                    } else {
+                        if (ticksToRunEnergyRegen > 0) {
+                            ticksSinceRunEnergyRegen = (ticksSinceRunEnergyRegen + 1) % ticksToRunEnergyRegen;
+                            millisecondsSinceRunEnergyRegen = (long) (ticksSinceRunEnergyRegen * 0.6 * 1000);
+                            runEnergyRegenerationPercentage = ticksSinceRunEnergyRegen / (double) ticksToRunEnergyRegen;
+                        } else {
+                            ticksSinceRunEnergyRegen = 0;
+                            millisecondsSinceRunEnergyRegen = 0;
+                            runEnergyRegenerationPercentage = 0;
+                        }
+                    }
+                }
+                lastEnergyValue = client.getEnergy() / 100;
             }
         }
     }
