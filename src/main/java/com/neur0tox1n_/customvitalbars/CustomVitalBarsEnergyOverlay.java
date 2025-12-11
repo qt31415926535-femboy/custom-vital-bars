@@ -153,6 +153,9 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 
     private final ConfigManager configManager;
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CustomVitalBarsComponent.class);
+
+
     @Inject
     CustomVitalBarsEnergyOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager, ConfigManager configManager  )
     {
@@ -240,7 +243,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 
                 nextHighestRunEnergyMark = ((client.getEnergy() + 99) / 100) * 100;
 
-                ticksToRunEnergyRegen = (int) (Math.ceil((nextHighestRunEnergyMark - client.getEnergy()) / (double) rawRunEnergyRegenPerTick));
+                ticksToRunEnergyRegen = (int) (Math.ceil((nextHighestRunEnergyMark - client.getEnergy()) / (double) rawRunEnergyRegenPerTick) );
                 millisecondsToRunEnergyRegen = (long)(ticksToRunEnergyRegen * 0.6 * 1000);
 
                 millisecondsSinceRunEnergyRegen = 0;
@@ -248,6 +251,7 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
                 runEnergyRegenerationPercentage = 0;
             }
             else {
+                nextHighestRunEnergyMark = ((client.getEnergy() + 99) / 100) * 100;
                 if (millisecondsToRunEnergyRegen > 0) {
                     millisecondsSinceRunEnergyRegen = (millisecondsSinceRunEnergyRegen + deltaTime) % millisecondsToRunEnergyRegen;
                     runEnergyRegenerationPercentage = millisecondsSinceRunEnergyRegen / (double) millisecondsToRunEnergyRegen;
@@ -452,13 +456,14 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 
                         nextHighestRunEnergyMark = ((currentRunEnergy + 99) / 100) * 100;
 
-                        ticksToRunEnergyRegen = (int) (Math.ceil((nextHighestRunEnergyMark - currentRunEnergy) / (double) rawRunEnergyRegenPerTick / 3.0d));
+                        ticksToRunEnergyRegen = (int) (Math.ceil((nextHighestRunEnergyMark - currentRunEnergy) / (double) rawRunEnergyRegenPerTick ));
                         millisecondsToRunEnergyRegen = (long) (ticksToRunEnergyRegen * 0.6 * 1000);
 
                         ticksSinceRunEnergyRegen = 0;
                         millisecondsSinceRunEnergyRegen = 0;
                         runEnergyRegenerationPercentage = 0;
                     } else {
+                        nextHighestRunEnergyMark = ((currentRunEnergy + 99) / 100) * 100;
                         if (ticksToRunEnergyRegen > 0) {
                             ticksSinceRunEnergyRegen = (ticksSinceRunEnergyRegen + 1) % ticksToRunEnergyRegen;
                             millisecondsSinceRunEnergyRegen = (long) (ticksSinceRunEnergyRegen * 0.6 * 1000);
@@ -472,6 +477,16 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
                 }
                 lastEnergyValue = client.getEnergy() / 100;
             }
+
+
+
+
+
+            log.debug( "energy:  " + currentRunEnergy );
+            log.debug( "nextHighestRunEnergyMark: " + nextHighestRunEnergyMark );
+            log.debug( "ticksToRunEnergyRegen: " + ticksToRunEnergyRegen );
+            log.debug( "millisecondsToRunEnergyRegen: " + millisecondsToRunEnergyRegen );
+
         }
     }
 
