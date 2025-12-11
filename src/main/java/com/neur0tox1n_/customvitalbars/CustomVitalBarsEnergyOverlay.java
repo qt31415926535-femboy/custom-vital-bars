@@ -477,16 +477,6 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
                 }
                 lastEnergyValue = client.getEnergy() / 100;
             }
-
-
-
-
-
-            log.debug( "energy:  " + currentRunEnergy );
-            log.debug( "nextHighestRunEnergyMark: " + nextHighestRunEnergyMark );
-            log.debug( "ticksToRunEnergyRegen: " + ticksToRunEnergyRegen );
-            log.debug( "millisecondsToRunEnergyRegen: " + millisecondsToRunEnergyRegen );
-
         }
     }
 
