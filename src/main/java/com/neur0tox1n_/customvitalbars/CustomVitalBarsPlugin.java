@@ -257,6 +257,7 @@ public class CustomVitalBarsPlugin extends Plugin
 	public void onMenuOptionClicked( MenuOptionClicked event )
 	{
 		healthOverlay.onMenuOptionClicked( event );
+        specialOverlay.onMenuOptionClicked( event );
 	}
 
 	private void checkCustomVitalBars()

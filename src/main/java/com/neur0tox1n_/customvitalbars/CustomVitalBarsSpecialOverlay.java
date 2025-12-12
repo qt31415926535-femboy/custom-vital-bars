@@ -2,6 +2,8 @@ package com.neur0tox1n_.customvitalbars;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
+import java.util.Map;
 import javax.inject.Inject;
 
 import lombok.Getter;
@@ -20,8 +22,10 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.util.Text;
 
-public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
+public class CustomVitalBarsSpecialOverlay extends OverlayPanel
+{
 
     private static final int MAX_SPECIAL_ATTACK_VALUE = 100;
 
@@ -38,8 +42,9 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
     private boolean uiElementsOpen = false;
 
     private static final int SPEC_REGEN_TICKS = 50;
+    private static final int SURGE_POTION_BASE_COOLDOWN_MILLISECONDS = 300000;
     @Getter
-    private double specialPercentage;
+    private double specialPercentageOrSurgeCooldown;
 
     private int ticksSinceSpecRegen;
     private boolean wearingLightbearer;
@@ -57,6 +62,9 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
     private double lastKnownSidebarX = 0, lastKnownSidebarY = 0;
 
     private Color specialMainColour, specialHealColour, specialSurgeCooldownColour;
+
+    private boolean isDrinking = false;
+    private final Map<Integer, Integer> previousInventory = new HashMap<>();
 
     @Inject
     private OverlayManager overlayManager;
@@ -105,7 +113,7 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
                 () -> 0,
                 () -> (surgePotionCooldown > 0 ? specialSurgeCooldownColour : specialMainColour),
                 () -> specialHealColour,
-                () -> specialPercentage,
+                () -> specialPercentageOrSurgeCooldown,
                 () -> loadSprite(SpriteID.MINIMAP_ORB_SPECIAL_ICON)
         );
     }
@@ -116,18 +124,28 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
         deltaTime = java.time.Instant.now().toEpochMilli() - lastTime;
         lastTime = java.time.Instant.now().toEpochMilli();
 
-        if ( client.getVarpValue(VarPlayer.SPECIAL_ATTACK_PERCENT) == 1000 )
+        if ( client.getVarpValue(VarPlayer.SPECIAL_ATTACK_PERCENT) == 1000 && surgePotionCooldown == 0 )
         {
             millisecondsSinceSpecRegen = 0;
-            specialPercentage = 0;
+            specialPercentageOrSurgeCooldown = 0;
         }
         else
         {
             double millisecondsPerSpecRegen = wearingLightbearer ? SPEC_REGEN_TICKS / 2 : SPEC_REGEN_TICKS;
             millisecondsPerSpecRegen *= 0.6d * 1000;
-
             millisecondsSinceSpecRegen = (long)((millisecondsSinceSpecRegen + deltaTime) % millisecondsPerSpecRegen);
-            specialPercentage = millisecondsSinceSpecRegen / millisecondsPerSpecRegen;
+
+            if ( surgePotionCooldown <= 0 )
+            {
+                surgePotionCooldown = 0;
+                specialPercentageOrSurgeCooldown = millisecondsSinceSpecRegen / millisecondsPerSpecRegen;
+            }
+            else
+            {
+                surgePotionCooldown -= deltaTime;
+
+                specialPercentageOrSurgeCooldown = (double) surgePotionCooldown / SURGE_POTION_BASE_COOLDOWN_MILLISECONDS;
+            }
         }
 
         Viewport curViewport = null;
@@ -207,6 +225,19 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
         }
     }
 
+    private void updateInventoryState()
+    {
+        previousInventory.clear();
+        ItemContainer inventory = client.getItemContainer(InventoryID.INVENTORY);
+        if (inventory != null)
+        {
+            for (Item item : inventory.getItems())
+            {
+                previousInventory.merge(item.getId(), item.getQuantity(), Integer::sum);
+            }
+        }
+    }
+
     @Subscribe
     public void onGameStateChanged(GameStateChanged ev)
     {
@@ -214,12 +245,27 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
         {
             ticksSinceSpecRegen = 0;
         }
+
+        if ( ev.getGameState().equals( GameState.LOGGED_IN ) )
+        {
+            isDrinking = false;
+            updateInventoryState();
+        }
     }
 
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event)
     {
-        if (event.getContainerId() != InventoryID.EQUIPMENT.getId())
+        if ( event.getContainerId() == InventoryID.INVENTORY.getId() || event.getContainerId() == InventoryID.BANK.getId())
+        {
+            if ( isDrinking )
+            {
+                detectConsumableUsage();
+                isDrinking = false;
+            }
+            updateInventoryState();
+        }
+        else if (event.getContainerId() != InventoryID.EQUIPMENT.getId())
         {
             return;
         }
@@ -245,12 +291,23 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
             ticksSinceSpecRegen = (ticksSinceSpecRegen + 1) % ticksPerSpecRegen;
             millisecondsSinceSpecRegen = (long) (ticksSinceSpecRegen * 0.6 * 1000);
         }
-        else
+        else if ( surgePotionCooldown == 0 )
         {
             ticksSinceSpecRegen = 0;
             millisecondsSinceSpecRegen = 0;
         }
-        specialPercentage = ticksSinceSpecRegen / (double) ticksPerSpecRegen;
+
+        if ( surgePotionCooldown >= 0 )
+        {
+            specialPercentageOrSurgeCooldown = (double) surgePotionCooldown / SURGE_POTION_BASE_COOLDOWN_MILLISECONDS;
+        }
+        else
+        {
+            //surgePotionCooldown = 0;
+            specialPercentageOrSurgeCooldown = ticksSinceSpecRegen / (double) ticksPerSpecRegen;
+        }
+
+        isDrinking = false;
     }
 
     @Subscribe
@@ -292,5 +349,53 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
         }
         configManager.setConfiguration( "Custom Vital Bars", "debugSpecialDeltaX", (int) deltaX );
         configManager.setConfiguration( "Custom Vital Bars", "debugSpecialDeltaY", (int) deltaY );
+    }
+
+    @Subscribe
+    public void onMenuOptionClicked( MenuOptionClicked event )
+    {
+        String menuOption = Text.removeTags( event.getMenuOption() );
+        if ( menuOption.equals( "Drink" ) && isApplicableConsumable( event.getItemId() ) )
+        {
+            isDrinking = true;
+        }
+    }
+
+    private boolean isApplicableConsumable(int itemId)
+    {
+        SpecialEnergyRestoration item = SpecialEnergyRestoration.getSpecialRestorationByItemId(itemId);
+        return item != null;
+    }
+
+    private void detectConsumableUsage()
+    {
+        ItemContainer inventory = client.getItemContainer(InventoryID.INVENTORY);
+        if (inventory == null)
+        {
+            return;
+        }
+
+        Map<Integer, Integer> currentInventory = new HashMap<>();
+        for (Item item : inventory.getItems())
+        {
+            currentInventory.merge(item.getId(), item.getQuantity(), Integer::sum);
+        }
+
+        for (Map.Entry<Integer, Integer> entry : previousInventory.entrySet())
+        {
+            int itemID = entry.getKey();
+            int previousItemQuantity = entry.getValue();
+            if (previousItemQuantity > currentInventory.getOrDefault(itemID, 0) && isApplicableConsumable(itemID))
+            {
+                handleConsumable(itemID);
+            }
+        }
+    }
+
+    private void handleConsumable(int itemId)
+    {
+        SpecialEnergyRestoration item = SpecialEnergyRestoration.getSpecialRestorationByItemId(itemId);
+
+        surgePotionCooldown = item.getCooldown();
     }
 }
