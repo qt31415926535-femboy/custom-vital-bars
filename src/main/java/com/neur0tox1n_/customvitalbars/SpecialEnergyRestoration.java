@@ -10,10 +10,6 @@ import java.util.Map;
 @AllArgsConstructor
 public enum SpecialEnergyRestoration
 {
-    PRAYER_POTION_1(ItemID.PRAYER_POTION1, 300000),
-    PRAYER_POTION_2(ItemID.PRAYER_POTION2, 300000),
-    PRAYER_POTION_3(ItemID.PRAYER_POTION3, 300000),
-    PRAYER_POTION_4(ItemID.PRAYER_POTION4, 300000),
     SURGE_POTION_1(ItemID.SURGE_POTION1, 300000),
     SURGE_POTION_2(ItemID.SURGE_POTION2, 300000),
     SURGE_POTION_3(ItemID.SURGE_POTION3, 300000),
@@ -38,4 +34,5 @@ public enum SpecialEnergyRestoration
     {
         return ITEM_MAP.get(itemId);
     }
+
 }
