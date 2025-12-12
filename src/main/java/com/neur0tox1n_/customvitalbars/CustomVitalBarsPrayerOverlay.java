@@ -140,12 +140,14 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
                 () -> getRestoreValue(Skill.PRAYER.getName()),
                 () ->
                 {
-                    Color prayerColor = regenPotionEffectActive ? prayerRegenActiveColour : prayerMainColour;
+                    OutlineProgressSelection outlineOption = config.prayerOutlineProgressSelection();
+                    Color prayerColor = (outlineOption == OutlineProgressSelection.SHOW_NATURAL_PROGRESS_ONLY ? prayerMainColour : (regenPotionEffectActive ? prayerRegenActiveColour : prayerMainColour));
                     for (Prayer pray : Prayer.values())
                     {
                         if (client.isPrayerActive(pray))
                         {
-                            prayerColor = regenPotionEffectActive ? prayerRegenActivePrayerActiveColour : prayerActiveColour;
+                            prayerColor = (outlineOption == OutlineProgressSelection.SHOW_NATURAL_PROGRESS_ONLY ? prayerActiveColour : (regenPotionEffectActive ? prayerRegenActiveColour : prayerActiveColour));
+
                             break;
                         }
                     }

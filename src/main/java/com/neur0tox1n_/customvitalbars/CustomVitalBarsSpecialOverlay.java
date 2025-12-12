@@ -26,7 +26,6 @@ import net.runelite.client.util.Text;
 
 public class CustomVitalBarsSpecialOverlay extends OverlayPanel
 {
-
     private static final int MAX_SPECIAL_ATTACK_VALUE = 100;
 
     private final Client client;
@@ -70,6 +69,9 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel
     private OverlayManager overlayManager;
 
     private final ConfigManager configManager;
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CustomVitalBarsComponent.class);
+
 
     @Inject
     CustomVitalBarsSpecialOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager, ConfigManager configManager )
@@ -124,16 +126,18 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel
         deltaTime = java.time.Instant.now().toEpochMilli() - lastTime;
         lastTime = java.time.Instant.now().toEpochMilli();
 
-        if ( client.getVarpValue(VarPlayer.SPECIAL_ATTACK_PERCENT) == 1000 && surgePotionCooldown == 0 )
+        if ( client.getVarpValue(VarPlayer.SPECIAL_ATTACK_PERCENT) == 1000 && surgePotionCooldown <= 0 )
         {
             millisecondsSinceSpecRegen = 0;
             specialPercentageOrSurgeCooldown = 0;
+            surgePotionCooldown = 0;
         }
         else
         {
             double millisecondsPerSpecRegen = wearingLightbearer ? SPEC_REGEN_TICKS / 2 : SPEC_REGEN_TICKS;
             millisecondsPerSpecRegen *= 0.6d * 1000;
             millisecondsSinceSpecRegen = (long)((millisecondsSinceSpecRegen + deltaTime) % millisecondsPerSpecRegen);
+
 
             if ( surgePotionCooldown <= 0 )
             {
@@ -144,7 +148,15 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel
             {
                 surgePotionCooldown -= deltaTime;
 
-                specialPercentageOrSurgeCooldown = (double) surgePotionCooldown / SURGE_POTION_BASE_COOLDOWN_MILLISECONDS;
+                OutlineProgressSelection outlineOption = config.specialOutlineProgressSelection();
+                if ( outlineOption == OutlineProgressSelection.SHOW_NATURAL_PROGRESS_ONLY )
+                {
+                    specialPercentageOrSurgeCooldown = millisecondsSinceSpecRegen / millisecondsPerSpecRegen;
+                }
+                else if ( outlineOption == OutlineProgressSelection.SHOW_CONSUMABLE_PROGRESS_ONLY || outlineOption == OutlineProgressSelection.SHOW_NATURAL_AND_CONSUMABLE_PROGRESS )
+                {
+                    specialPercentageOrSurgeCooldown = (double) surgePotionCooldown / SURGE_POTION_BASE_COOLDOWN_MILLISECONDS;
+                }
             }
         }
 
@@ -196,7 +208,7 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel
 
         if ( plugin.isSpecialDisplayed() && config.renderSpecial() && !uiElementsOpen )
         {
-            barRenderer.renderBar( config, g, panelComponent, Vital.SPECIAL_ENERGY, false, client );
+            barRenderer.renderBar( config, g, panelComponent, Vital.SPECIAL_ENERGY, (surgePotionCooldown > 0), client );
 
             return config.specialSize();
         }
@@ -297,9 +309,17 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel
             millisecondsSinceSpecRegen = 0;
         }
 
-        if ( surgePotionCooldown >= 0 )
+        if ( surgePotionCooldown > 0 )
         {
-            specialPercentageOrSurgeCooldown = (double) surgePotionCooldown / SURGE_POTION_BASE_COOLDOWN_MILLISECONDS;
+            OutlineProgressSelection outlineOption = config.specialOutlineProgressSelection();
+            if ( outlineOption == OutlineProgressSelection.SHOW_NATURAL_PROGRESS_ONLY )
+            {
+                specialPercentageOrSurgeCooldown = ticksSinceSpecRegen / (double) ticksPerSpecRegen;
+            }
+            else if ( outlineOption == OutlineProgressSelection.SHOW_CONSUMABLE_PROGRESS_ONLY || outlineOption == OutlineProgressSelection.SHOW_NATURAL_AND_CONSUMABLE_PROGRESS )
+            {
+                specialPercentageOrSurgeCooldown = (double) surgePotionCooldown / SURGE_POTION_BASE_COOLDOWN_MILLISECONDS;
+            }
         }
         else
         {
