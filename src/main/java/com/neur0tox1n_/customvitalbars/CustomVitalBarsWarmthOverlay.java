@@ -29,8 +29,11 @@ import net.runelite.api.*;
 import net.runelite.api.events.*;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.config.Alpha;
+import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.itemstats.Effect;
@@ -45,7 +48,6 @@ import java.awt.image.BufferedImage;
 public class CustomVitalBarsWarmthOverlay extends OverlayPanel
 {
     // love to StatusBars
-    private static final Color WARMTH_COLOUR = new Color(244, 97, 0);
 
     private static final int WINTERTODT_REGION = 6462;
 
@@ -78,6 +80,8 @@ public class CustomVitalBarsWarmthOverlay extends OverlayPanel
     private double deltaX = 0, deltaY = 0;
     private double lastKnownSidebarX = 0, lastKnownSidebarY = 0;
 
+    private Color warmthMainColour, warmthHealColour;
+
     @Inject
     private OverlayManager overlayManager;
 
@@ -105,6 +109,9 @@ public class CustomVitalBarsWarmthOverlay extends OverlayPanel
         lastKnownSidebarX = config.debugSidebarPanelX();
         lastKnownSidebarY = config.debugSidebarPanelY();
 
+        warmthMainColour = config.warmthMainColour();
+        warmthHealColour = config.warmthHealColour();
+
         initRenderer();
 
         if ( config.warmthRelativeToInventory() )
@@ -119,8 +126,8 @@ public class CustomVitalBarsWarmthOverlay extends OverlayPanel
                 () -> 100,
                 () -> client.getVarbitValue(Varbits.WINTERTODT_WARMTH) / 10,
                 () -> 0,
-                () -> WARMTH_COLOUR,
-                () -> null,
+                () -> warmthMainColour,
+                () -> warmthHealColour,
                 () -> warmthRegenerationPercentage,
                 () -> skillIconManager.getSkillImage(Skill.FIREMAKING, true)
         );
@@ -243,6 +250,23 @@ public class CustomVitalBarsWarmthOverlay extends OverlayPanel
     public void onWidgetClosed( WidgetClosed widgetClosed )
     {
         uiElementsOpen = false;
+    }
+
+    @Subscribe
+    public void onConfigChanged( ConfigChanged event )
+    {
+        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("warmthRelativeToSidebarPanel") )
+        {
+            toggleLock( false );
+        }
+        else if ( event.getKey().equals("warmthMainColour") )
+        {
+            warmthMainColour = config.warmthMainColour();
+        }
+        else if ( event.getKey().equals("warmthHealColour") )
+        {
+            warmthHealColour = config.warmthHealColour();
+        }
     }
 
     @Subscribe

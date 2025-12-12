@@ -189,25 +189,14 @@ public class CustomVitalBarsPlugin extends Plugin
         {
             hideWhenBigUIOpen = config.hideWhenLargeInterfacePanelsOpen();
         }
-        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("hitpointsRelativeToSidebarPanel") )
+
+        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) )
         {
-            healthOverlay.toggleLock( false );
-        }
-        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("specialRelativeToSidebarPanel") )
-        {
-            specialOverlay.toggleLock( false );
-        }
-        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("prayerRelativeToSidebarPanel") )
-        {
-            prayerOverlay.toggleLock( false );
-        }
-        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("energyRelativeToSidebarPanel") )
-        {
-            energyOverlay.toggleLock( false );
-        }
-        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("warmthRelativeToSidebarPanel") )
-        {
-            warmthOverlay.toggleLock( false );
+            healthOverlay.onConfigChanged( event );
+            specialOverlay.onConfigChanged( event );
+            prayerOverlay.onConfigChanged( event );
+            energyOverlay.onConfigChanged( event );
+            warmthOverlay.onConfigChanged( event );
         }
 	}
 

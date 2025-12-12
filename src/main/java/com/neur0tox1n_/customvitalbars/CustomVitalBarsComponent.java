@@ -37,8 +37,12 @@ import java.text.DecimalFormat;
 
 import net.runelite.api.Client;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.config.Alpha;
+import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.Notification;
+import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import com.neur0tox1n_.customvitalbars.Viewport;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.components.TextComponent;
@@ -55,11 +59,11 @@ class CustomVitalBarsComponent
     @Inject
     private Client client;
 
+    private CustomVitalBarsConfig config;
+
     @Inject
     private ConfigManager configManager;
 
-    private static final Color BACKGROUND = new Color(0, 0, 0, 150);
-    private static final Color OVERHEAL_COLOR = new Color(216, 255, 139, 150);
     private static final int BORDER_SIZE = 1;
     private static final DecimalFormat df = new DecimalFormat("0");
 
@@ -80,7 +84,10 @@ class CustomVitalBarsComponent
     private int pulseColourDirection = -1;
     private int pulseColourIncrement = 3;
 
-    int initialX = 200, initialY = 200;
+    private int initialX = 200, initialY = 200;
+    private Color vitalBackgroundColour, vitalOverhealColour, vitalFramesColour, vitalTextColour;
+    private boolean vitalTextOutline = false;
+    private Vital thisVital;
 
     private PanelComponent boundingBox =  null;
 
@@ -105,6 +112,9 @@ class CustomVitalBarsComponent
         int iconOffsetX = 0, iconOffsetY = 0;
         boolean lockRelativeToInventory = false;
 
+        this.config = config;
+        thisVital = whichVital;
+
         if ( whichVital == Vital.HITPOINTS )
         {
             dir = config.hitpointsFullnessDirection();
@@ -124,6 +134,11 @@ class CustomVitalBarsComponent
             width = config.hitpointsSize().width;
             height = config.hitpointsSize().height;
             lockRelativeToInventory = config.hitpointsRelativeToInventory();
+            vitalBackgroundColour = config.hitpointsBackgroundColour();
+            vitalOverhealColour = config.hitpointsOverhealColour();
+            vitalFramesColour = config.hitpointsFramesColour();
+            vitalTextColour = config.hitpointsTextColour();
+            vitalTextOutline = config.hitpointsTextOutline();
         }
         else if ( whichVital == Vital.PRAYER )
         {
@@ -144,6 +159,11 @@ class CustomVitalBarsComponent
             width = config.prayerSize().width;
             height = config.prayerSize().height;
             lockRelativeToInventory = config.prayerRelativeToInventory();
+            vitalBackgroundColour = config.prayerBackgroundColour();
+            vitalOverhealColour = config.prayerOverhealColour();
+            vitalFramesColour = config.prayerFramesColour();
+            vitalTextColour = config.prayerTextColour();
+            vitalTextOutline = config.prayerTextOutline();
         }
         else if ( whichVital == Vital.RUN_ENERGY )
         {
@@ -164,6 +184,11 @@ class CustomVitalBarsComponent
             width = config.energySize().width;
             height = config.energySize().height;
             lockRelativeToInventory = config.energyRelativeToInventory();
+            vitalBackgroundColour = config.energyBackgroundColour();
+            vitalOverhealColour = config.energyOverhealColour();
+            vitalFramesColour = config.energyFramesColour();
+            vitalTextColour = config.energyTextColour();
+            vitalTextOutline = config.energyTextOutline();
         }
         else if ( whichVital == Vital.SPECIAL_ENERGY )
         {
@@ -184,9 +209,13 @@ class CustomVitalBarsComponent
             width = config.specialSize().width;
             height = config.specialSize().height;
             lockRelativeToInventory = config.specialRelativeToInventory();
+            vitalBackgroundColour = config.specialBackgroundColour();
+            vitalOverhealColour = config.specialOverhealColour();
+            vitalFramesColour = config.specialFramesColour();
+            vitalTextColour = config.specialTextColour();
+            vitalTextOutline = config.specialTextOutline();
         }
-        else if ( whichVital == Vital.WARMTH )
-        {
+        else if ( whichVital == Vital.WARMTH ) {
             dir = config.warmthFullnessDirection();
             textFormat = config.warmthTextFormat();
             textLoc = config.warmthTextPosition();
@@ -204,6 +233,11 @@ class CustomVitalBarsComponent
             width = config.warmthSize().width;
             height = config.warmthSize().height;
             lockRelativeToInventory = config.warmthRelativeToInventory();
+            vitalBackgroundColour = config.warmthBackgroundColour();
+            vitalOverhealColour = config.warmthOverhealColour();
+            vitalFramesColour = config.warmthFramesColour();
+            vitalTextColour = config.warmthTextColour();
+            vitalTextOutline = config.warmthTextOutline();
         }
 
         if ( boundingBox == null )
@@ -246,13 +280,13 @@ class CustomVitalBarsComponent
             eX += width - filledWidth;
         }
 
-        //final Color fill = colorSupplier.get();
         Color fill = colorSupplier.get();
 
         refreshSkills();
 
-        graphics.setColor(BACKGROUND);
+        graphics.setColor( vitalFramesColour );
         graphics.drawRect(initialX, initialY, width, height);
+        graphics.setColor( vitalBackgroundColour );
         graphics.fillRect(initialX, initialY, width, height );
 
         pulseColour = false;
@@ -329,9 +363,9 @@ class CustomVitalBarsComponent
 
     private void renderOutline( CustomVitalBarsConfig config, Graphics2D graphics, int _x, int _y, FullnessDirection dir, int outlineSize, OutlineProgressSelection selectionOutlineProgress, OutlineProgressThreshold thresholdOutlineProgress, int width, int height, boolean isConsumableActive )
     {
-        graphics.setColor( BACKGROUND );
+        graphics.setColor( vitalFramesColour );
         graphics.drawRect( _x - outlineSize - 1, _y - outlineSize - 1, width + 2 * outlineSize + BORDER_SIZE + 1, height + 2 * outlineSize + BORDER_SIZE + 1 );
-
+        graphics.setColor( vitalBackgroundColour );
         if (    selectionOutlineProgress == OutlineProgressSelection.HIDE ||
                 (selectionOutlineProgress == OutlineProgressSelection.SHOW_CONSUMABLE_PROGRESS_ONLY && !isConsumableActive) )
         {
@@ -422,6 +456,8 @@ class CustomVitalBarsComponent
         }
 
         final TextComponent textComponent = new TextComponent();
+        textComponent.setColor( vitalTextColour );
+        textComponent.setOutline( vitalTextOutline );
         textComponent.setText( counterText );
         textComponent.setPosition( new Point(x + xOffset + textOffsetX, y + yOffset + textOffsetY) );
         textComponent.render( graphics );
@@ -527,7 +563,7 @@ class CustomVitalBarsComponent
 
         if ( filledHealSize + filledCurrentSize > fillThreshold )
         {
-            graphics.setColor( OVERHEAL_COLOR );
+            graphics.setColor( vitalOverhealColour );
 
             if ( dir == FullnessDirection.TOP )
             {
@@ -576,5 +612,125 @@ class CustomVitalBarsComponent
                 new int[]{ it, ot, ot, ob, ob, it,   it, it, ib, ib, it },
                 11
         );
+    }
+
+    @Subscribe
+    public void onConfigChanged( ConfigChanged event )
+    {
+        if ( thisVital == Vital.HITPOINTS )
+        {
+            if ( event.getKey().equals("hitpointsFramesColour") )
+            {
+                vitalFramesColour = config.hitpointsFramesColour();
+            }
+            else if ( event.getKey().equals("hitpointsBackgroundColour") )
+            {
+                vitalBackgroundColour = config.hitpointsBackgroundColour();
+            }
+            else if ( event.getKey().equals("hitpointsOverhealColour") )
+            {
+                vitalOverhealColour = config.hitpointsOverhealColour();
+            }
+            else if ( event.getKey().equals("hitpointsTextColour") )
+            {
+                vitalTextColour = config.hitpointsTextColour();
+            }
+            else if ( event.getKey().equals("hitpointsTextOutline") )
+            {
+                vitalTextOutline = config.hitpointsTextOutline();
+            }
+        }
+        else if ( thisVital == Vital.PRAYER )
+        {
+            if ( event.getKey().equals("prayerFramesColour") )
+            {
+                vitalFramesColour = config.prayerFramesColour();
+            }
+            else if ( event.getKey().equals("prayerBackgroundColour") )
+            {
+                vitalBackgroundColour = config.prayerBackgroundColour();
+            }
+            else if ( event.getKey().equals("prayerOverhealColour") )
+            {
+                vitalOverhealColour = config.prayerOverhealColour();
+            }
+            else if ( event.getKey().equals("prayerTextColour") )
+            {
+                vitalTextColour = config.prayerTextColour();
+            }
+            else if ( event.getKey().equals("prayerTextOutline") )
+            {
+                vitalTextOutline = config.prayerTextOutline();
+            }
+        }
+        else if ( thisVital == Vital.RUN_ENERGY )
+        {
+            if ( event.getKey().equals("energyFramesColour") )
+            {
+                vitalFramesColour = config.energyFramesColour();
+            }
+            else if ( event.getKey().equals("energyBackgroundColour") )
+            {
+                vitalBackgroundColour = config.energyBackgroundColour();
+            }
+            else if ( event.getKey().equals("energyOverhealColour") )
+            {
+                vitalOverhealColour = config.energyOverhealColour();
+            }
+            else if ( event.getKey().equals("energyTextColour") )
+            {
+                vitalTextColour = config.energyTextColour();
+            }
+            else if ( event.getKey().equals("energyTextOutline") )
+            {
+                vitalTextOutline = config.energyTextOutline();
+            }
+        }
+        else if ( thisVital == Vital.SPECIAL_ENERGY )
+        {
+            if ( event.getKey().equals("specialFramesColour") )
+            {
+                vitalFramesColour = config.specialFramesColour();
+            }
+            else if ( event.getKey().equals("specialBackgroundColour") )
+            {
+                vitalBackgroundColour = config.specialBackgroundColour();
+            }
+            else if ( event.getKey().equals("specialOverhealColour") )
+            {
+                vitalOverhealColour = config.specialOverhealColour();
+            }
+            else if ( event.getKey().equals("specialTextColour") )
+            {
+                vitalTextColour = config.specialTextColour();
+            }
+            else if ( event.getKey().equals("specialTextOutline") )
+            {
+                vitalTextOutline = config.specialTextOutline();
+            }
+        }
+        else if ( thisVital == Vital.WARMTH )
+        {
+            if ( event.getKey().equals("warmthFramesColour") )
+            {
+                vitalFramesColour = config.warmthFramesColour();
+            }
+            else if ( event.getKey().equals("warmthBackgroundColour") )
+            {
+                vitalBackgroundColour = config.warmthBackgroundColour();
+            }
+            else if ( event.getKey().equals("warmthOverhealColour") )
+            {
+                vitalOverhealColour = config.warmthOverhealColour();
+            }
+            else if ( event.getKey().equals("warmthTextColour") )
+            {
+                vitalTextColour = config.warmthTextColour();
+            }
+            else if ( event.getKey().equals("warmthTextOutline") )
+            {
+                vitalTextOutline = config.warmthTextOutline();
+            }
+        }
     }
 }

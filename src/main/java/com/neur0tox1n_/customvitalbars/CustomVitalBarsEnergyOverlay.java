@@ -34,6 +34,7 @@ import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemVariationMapping;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
@@ -93,9 +94,6 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
     // Full set grants an extra 10% boost to recovery rate
     private static final int GRACEFUL_FULL_SET_BOOST_BONUS = 10;
 
-    private static final Color ENERGY_HEAL_COLOR = new Color (199,  118, 0, 218);
-    private final Color RUN_STAMINA_COLOR = new Color(160, 124, 72, 255);
-    private final Color ENERGY_COLOR = new Color(199, 174, 0, 220);
     private final int MAX_RUN_ENERGY_VALUE = 100;
     private final int STAMINA_DURATION_TICKS = 200;
 
@@ -148,6 +146,8 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
 
     private int lastEnergyValue = 0;
 
+    private Color energyMainColour, energyHealColour, energyStaminaColour;
+
     @Inject
     private OverlayManager overlayManager;
 
@@ -178,6 +178,10 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
         lastKnownSidebarX = config.debugSidebarPanelX();
         lastKnownSidebarY = config.debugSidebarPanelY();
 
+        energyMainColour = config.energyMainColour();
+        energyHealColour = config.energyHealColour();
+        energyStaminaColour = config.energyStaminaColour();
+
         initRenderer();
 
         if ( config.energyRelativeToInventory() )
@@ -196,14 +200,14 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
                 {
                     if ( client.getVarbitValue(Varbits.RUN_SLOWED_DEPLETION_ACTIVE) != 0 )
                     {
-                        return RUN_STAMINA_COLOR;
+                        return energyStaminaColour;
                     }
                     else
                     {
-                        return ENERGY_COLOR;
+                        return energyMainColour;
                     }
                 },
-                () -> ENERGY_HEAL_COLOR,
+                () -> energyHealColour,
                 () ->
                 {
                     if ( config.energyOutlineProgressSelection() == OutlineProgressSelection.SHOW_NATURAL_PROGRESS_ONLY )
@@ -239,9 +243,8 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
             }
             else if ( client.getEnergy() >= nextHighestRunEnergyMark )
             {
-                int rawRunEnergyRegenPerTick = (int)Math.floor( (1 + (getGracefulRecoveryBoost() / 100.0d)) * (Math.floor( client.getBoostedSkillLevel( Skill.AGILITY ) / 10.0d ) + 15));
-
                 nextHighestRunEnergyMark = ((client.getEnergy() + 99) / 100) * 100;
+                int rawRunEnergyRegenPerTick = (int)Math.floor( (1 + (getGracefulRecoveryBoost() / 100.0d)) * (Math.floor( client.getBoostedSkillLevel( Skill.AGILITY ) / 10.0d ) + 15));
 
                 ticksToRunEnergyRegen = (int) (Math.ceil((nextHighestRunEnergyMark - client.getEnergy()) / (double) rawRunEnergyRegenPerTick) );
                 millisecondsToRunEnergyRegen = (long)(ticksToRunEnergyRegen * 0.6 * 1000);
@@ -394,6 +397,32 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
     }
 
     @Subscribe
+    public void onConfigChanged( ConfigChanged event )
+    {
+        if ( barRenderer != null )
+        {
+            barRenderer.onConfigChanged( event );
+        }
+
+        if ( event.getKey().equals("energyRelativeToSidebarPanel") )
+        {
+            toggleLock( false );
+        }
+        else if ( event.getKey().equals("energyMainColour") )
+        {
+            energyMainColour = config.energyMainColour();
+        }
+        else if ( event.getKey().equals("energyHealColour") )
+        {
+            energyHealColour = config.energyHealColour();
+        }
+        else if ( event.getKey().equals("energyStaminaColour") )
+        {
+            energyStaminaColour = config.energyStaminaColour();
+        }
+    }
+
+    @Subscribe
     public void onWidgetLoaded( WidgetLoaded widgetLoaded )
     {
         uiElementsOpen = true;
@@ -443,7 +472,8 @@ public class CustomVitalBarsEnergyOverlay extends OverlayPanel
             }
             else
             {
-                if ( lastEnergyValue != client.getEnergy() / 100 )
+                // synchronise
+                if ( lastEnergyValue < client.getEnergy() / 100 )
                 {
                     ticksSinceRunEnergyRegen = 0;
                     millisecondsSinceRunEnergyRegen = 0;

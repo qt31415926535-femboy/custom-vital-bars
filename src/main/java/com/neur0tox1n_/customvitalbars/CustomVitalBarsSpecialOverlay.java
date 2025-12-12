@@ -8,8 +8,11 @@ import lombok.Getter;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.config.Alpha;
+import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
@@ -20,7 +23,6 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 
 public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
 
-    private static final Color SPECIAL_ATTACK_COLOR = new Color(3, 153, 0, 195);
     private static final int MAX_SPECIAL_ATTACK_VALUE = 100;
 
     private final Client client;
@@ -46,11 +48,15 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
     private long deltaTime;
     private long lastTime;
 
+    private long surgePotionCooldown = 0;
+
     private final SkillIconManager skillIconManager;
     private final SpriteManager spriteManager;
 
     private double deltaX = 0, deltaY = 0;
     private double lastKnownSidebarX = 0, lastKnownSidebarY = 0;
+
+    private Color specialMainColour, specialHealColour, specialSurgeCooldownColour;
 
     @Inject
     private OverlayManager overlayManager;
@@ -79,6 +85,10 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
         lastKnownSidebarX = config.debugSidebarPanelX();
         lastKnownSidebarY = config.debugSidebarPanelY();
 
+        specialMainColour = config.specialMainColour();
+        specialHealColour = config.specialHealColour();
+        specialSurgeCooldownColour = config.specialSurgeCooldownColour();
+
         initRenderer();
 
         if ( config.specialRelativeToInventory() )
@@ -93,8 +103,8 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
                 () -> MAX_SPECIAL_ATTACK_VALUE,
                 () -> client.getVarpValue(VarPlayer.SPECIAL_ATTACK_PERCENT) / 10,
                 () -> 0,
-                () -> SPECIAL_ATTACK_COLOR,
-                () -> SPECIAL_ATTACK_COLOR,
+                () -> (surgePotionCooldown > 0 ? specialSurgeCooldownColour : specialMainColour),
+                () -> specialHealColour,
                 () -> specialPercentage,
                 () -> loadSprite(SpriteID.MINIMAP_ORB_SPECIAL_ICON)
         );
@@ -176,6 +186,28 @@ public class CustomVitalBarsSpecialOverlay extends OverlayPanel{
         return null;
     }
 
+    @Subscribe
+    public void onConfigChanged( ConfigChanged event )
+    {
+        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("specialRelativeToSidebarPanel") )
+        {
+            toggleLock( false );
+        }
+        else if ( event.getKey().equals("specialMainColour") )
+        {
+            specialMainColour = config.specialMainColour();
+        }
+        else if ( event.getKey().equals("specialHealColour") )
+        {
+            specialHealColour = config.specialHealColour();
+        }
+        else if ( event.getKey().equals("specialSurgeCooldownColour") )
+        {
+            specialSurgeCooldownColour = config.specialSurgeCooldownColour();
+        }
+    }
+
+    @Subscribe
     public void onGameStateChanged(GameStateChanged ev)
     {
         if (ev.getGameState() == GameState.HOPPING || ev.getGameState() == GameState.LOGIN_SCREEN)

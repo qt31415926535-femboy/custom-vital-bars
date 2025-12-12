@@ -14,6 +14,8 @@ import net.runelite.api.Point;
 import net.runelite.api.events.*;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.config.Alpha;
+import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -32,14 +34,6 @@ import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.Text;
 
 public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
-
-    private static final Color HEALTH_COLOR = new Color(225, 35, 0, 125);
-    private static final Color DELAYED_HEAL_COLOR = new Color(255, 35, 111, 150);
-    private static final Color POISONED_COLOR = new Color(0, 145, 0, 150);
-    private static final Color VENOMED_COLOR = new Color(0, 65, 0, 150);
-    private static final Color HEAL_COLOR = new Color(255, 112, 6, 150);
-    private static final Color DISEASE_COLOR = new Color(255, 193, 75, 181);
-    private static final Color PARASITE_COLOR = new Color(196, 62, 109, 181);
 
     private static final int WINTERTODT_REGION = 6462;
 
@@ -79,10 +73,11 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
     private double deltaX = 0, deltaY = 0;
     private double lastKnownSidebarX = 0, lastKnownSidebarY = 0;
 
+    private Color hitpointsMainColour, hitpointsHealColour, hitpointsDelayedHealColour;
+    private Color hitpointsPoisonedColour, hitpointsEnvenomedColour, hitpointsDiseasedColour, hitpointsParasiteColour;
+
     @Inject
     private OverlayManager overlayManager;
-
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CustomVitalBarsComponent.class);
 
     private final ConfigManager configManager;
 
@@ -113,6 +108,14 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
         lastKnownSidebarX = config.debugSidebarPanelX();
         lastKnownSidebarY = config.debugSidebarPanelY();
 
+        hitpointsMainColour = config.hitpointsMainColour();
+        hitpointsHealColour = config.hitpointsHealColour();
+        hitpointsDelayedHealColour = config.hitpointsDelayedHealColour();
+        hitpointsPoisonedColour = config.hitpointsPoisonedColour();
+        hitpointsEnvenomedColour = config.hitpointsEnvenomedColour();
+        hitpointsDiseasedColour = config.hitpointsDiseasedColour();
+        hitpointsParasiteColour = config.hitpointsParasiteColour();
+
         initRenderer();
 
         if ( config.hitpointsRelativeToInventory() )
@@ -133,32 +136,32 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
 
                     if (poisonState >= 1000000)
                     {
-                        return VENOMED_COLOR;
+                        return hitpointsEnvenomedColour;
                     }
 
                     if (poisonState > 0)
                     {
-                        return POISONED_COLOR;
+                        return hitpointsPoisonedColour;
                     }
 
                     if (client.getVarpValue(VarPlayer.DISEASE_VALUE) > 0)
                     {
-                        return DISEASE_COLOR;
+                        return hitpointsDiseasedColour;
                     }
 
                     if (client.getVarbitValue(Varbits.PARASITE) >= 1)
                     {
-                        return PARASITE_COLOR;
+                        return hitpointsParasiteColour;
                     }
 
                     if ( ticksToDelayedRecovery > 0 )
                     {
-                        return DELAYED_HEAL_COLOR;
+                        return hitpointsDelayedHealColour;
                     }
 
-                    return HEALTH_COLOR;
+                    return hitpointsMainColour;
                 },
-                () -> HEAL_COLOR,
+                () -> hitpointsHealColour,
                 () ->
                 {
                     if ( config.hitpointsOutlineProgressSelection() == OutlineProgressSelection.SHOW_NATURAL_PROGRESS_ONLY )
@@ -337,6 +340,43 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
         {
             isEating = false;
             updateInventoryState();
+        }
+    }
+
+    @Subscribe
+    public void onConfigChanged( ConfigChanged event )
+    {
+        if ( event.getKey().equals("hitpointsRelativeToSidebarPanel") )
+        {
+            toggleLock( false );
+        }
+        else if ( event.getKey().equals("hitpointsMainColour") )
+        {
+            hitpointsMainColour = config.hitpointsMainColour();
+        }
+        else if ( event.getKey().equals("hitpointsHealColour") )
+        {
+            hitpointsHealColour = config.hitpointsHealColour();
+        }
+        else if ( event.getKey().equals("hitpointsDelayedHealColour") )
+        {
+            hitpointsDelayedHealColour = config.hitpointsDelayedHealColour();
+        }
+        else if ( event.getKey().equals("hitpointsPoisonedColour") )
+        {
+            hitpointsPoisonedColour = config.hitpointsPoisonedColour();
+        }
+        else if ( event.getKey().equals("hitpointsEnvenomedColour") )
+        {
+            hitpointsEnvenomedColour = config.hitpointsEnvenomedColour();
+        }
+        else if ( event.getKey().equals("hitpointsDiseasedColour") )
+        {
+            hitpointsDiseasedColour = config.hitpointsDiseasedColour();
+        }
+        else if ( event.getKey().equals("hitpointsParasiteColour") )
+        {
+            hitpointsParasiteColour = config.hitpointsParasiteColour();
         }
     }
 

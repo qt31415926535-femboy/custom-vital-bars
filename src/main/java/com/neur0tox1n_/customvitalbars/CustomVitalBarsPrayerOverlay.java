@@ -35,8 +35,11 @@ import net.runelite.api.*;
 import net.runelite.api.events.*;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.config.Alpha;
+import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStats;
 import net.runelite.client.game.SkillIconManager;
@@ -50,12 +53,6 @@ import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
 public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
-
-    private static final Color PRAYER_COLOR = new Color(50, 200, 200, 175);
-    private static final Color ACTIVE_PRAYER_COLOR = new Color(57, 255, 186, 225);
-    private static final Color PRAYER_HEAL_COLOR = new Color(57, 255, 186, 75);
-    private static final Color PRAYER_REGEN_COLOR = new Color(109, 125, 119, 255);
-    private static final Color ACTIVE_PRAYER_AND_PRAYER_REGEN_COLOR = new Color(120, 124, 102, 255);
 
     private static final int PRAYER_REGENERATION_INTERVAL_TICKS = 12;
     private static final long PRAYER_REGENERATION_INTERVAL_MILLISECONDS = (long)(PRAYER_REGENERATION_INTERVAL_TICKS * 0.6 * 1000);
@@ -86,6 +83,8 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
 
     private double deltaX = 0, deltaY = 0;
     private double lastKnownSidebarX = 0, lastKnownSidebarY = 0;
+
+    private Color prayerMainColour, prayerHealColour, prayerActiveColour, prayerRegenActiveColour, prayerRegenActivePrayerActiveColour;
 
     private int lastPrayerValue = 0;
 
@@ -119,6 +118,12 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
         lastKnownSidebarX = config.debugSidebarPanelX();
         lastKnownSidebarY = config.debugSidebarPanelY();
 
+        prayerMainColour = config.prayerMainColour();
+        prayerHealColour = config.prayerHealColour();
+        prayerActiveColour = config.prayerActiveColour();
+        prayerRegenActiveColour = config.prayerRegenActiveColour();
+        prayerRegenActivePrayerActiveColour = config.prayerRegenActivePrayerActiveColour();
+
         initRenderer();
 
         if ( config.prayerRelativeToInventory() )
@@ -135,19 +140,19 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
                 () -> getRestoreValue(Skill.PRAYER.getName()),
                 () ->
                 {
-                    Color prayerColor = regenPotionEffectActive ? PRAYER_REGEN_COLOR : PRAYER_COLOR;
+                    Color prayerColor = regenPotionEffectActive ? prayerRegenActiveColour : prayerMainColour;
                     for (Prayer pray : Prayer.values())
                     {
                         if (client.isPrayerActive(pray))
                         {
-                            prayerColor = regenPotionEffectActive ? ACTIVE_PRAYER_AND_PRAYER_REGEN_COLOR : ACTIVE_PRAYER_COLOR;
+                            prayerColor = regenPotionEffectActive ? prayerRegenActivePrayerActiveColour : prayerActiveColour;
                             break;
                         }
                     }
 
                     return prayerColor;
                 },
-                () -> PRAYER_HEAL_COLOR,
+                () -> prayerHealColour,
                 () -> prayerConsumptionRateOrRegeneration,
                 () -> skillIconManager.getSkillImage(Skill.PRAYER, true)
         );
@@ -282,6 +287,36 @@ public class CustomVitalBarsPrayerOverlay extends OverlayPanel{
         }
     }
 
+    @Subscribe
+    public void onConfigChanged( ConfigChanged event )
+    {
+        if ( CustomVitalBarsConfig.GROUP.equals(event.getGroup()) && event.getKey().equals("prayerRelativeToSidebarPanel") )
+        {
+            toggleLock( false );
+        }
+        else if ( event.getKey().equals("prayerMainColour") )
+        {
+            prayerMainColour = config.prayerMainColour();
+        }
+        else if ( event.getKey().equals("prayerHealColour") )
+        {
+            prayerHealColour = config.prayerHealColour();
+        }
+        else if ( event.getKey().equals("prayerActiveColour") )
+        {
+            prayerActiveColour = config.prayerActiveColour();
+        }
+        else if ( event.getKey().equals("prayerRegenActiveColour") )
+        {
+            prayerRegenActiveColour = config.prayerRegenActiveColour();
+        }
+        else if ( event.getKey().equals("prayerRegenActivePrayerActiveColour") )
+        {
+            prayerRegenActivePrayerActiveColour = config.prayerRegenActivePrayerActiveColour();
+        }
+    }
+
+    @Subscribe
     public void onGameTick( GameTick gameTick )
     {
         if ( !regenPotionEffectActive || (config.prayerOutlineProgressSelection() == OutlineProgressSelection.SHOW_NATURAL_PROGRESS_ONLY) )
