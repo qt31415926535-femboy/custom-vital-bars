@@ -70,8 +70,9 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
     private final Map<Integer, Integer> previousInventory = new HashMap<>();
     private boolean isEating = false;
 
-    private double deltaX = 0, deltaY = 0;
-    private double lastKnownSidebarX = 0, lastKnownSidebarY = 0;
+    private int deltaX = 0, deltaY = 0;
+    private int lastKnownSidebarX = 0, lastKnownSidebarY = 0;
+    private int lastX = 0, lastY = 0;
 
     private Color hitpointsMainColour, hitpointsHealColour, hitpointsDelayedHealColour;
     private Color hitpointsPoisonedColour, hitpointsEnvenomedColour, hitpointsDiseasedColour, hitpointsParasiteColour;
@@ -80,6 +81,7 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
     private OverlayManager overlayManager;
 
     private final ConfigManager configManager;
+
 
     @Inject
     CustomVitalBarsHitpointsOverlay( Client client, CustomVitalBarsPlugin plugin, CustomVitalBarsConfig config, SkillIconManager skillIconManager, ItemStatChangesService itemstatservice, SpriteManager spriteManager, ConfigManager configManager )
@@ -271,7 +273,13 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
                     int newDeltaX = (int) (location.getX() + deltaX);
                     int newDeltaY = (int) (location.getY() + deltaY);
                     this.setPreferredLocation( new java.awt.Point(newDeltaX, newDeltaY) );
-                    overlayManager.saveOverlay( this );
+
+                    if ( lastX != newDeltaX || lastY != newDeltaY )
+                    {
+                        overlayManager.saveOverlay(this);
+                    }
+                    lastX = newDeltaX;
+                    lastY = newDeltaY;
                 }
             }
         }
@@ -576,8 +584,8 @@ public class CustomVitalBarsHitpointsOverlay extends OverlayPanel{
             }
             else
             {
-                deltaX = this.getPreferredLocation().getX() - lastKnownSidebarX;
-                deltaY = this.getPreferredLocation().getY() - lastKnownSidebarY;
+                deltaX = (int) (this.getPreferredLocation().getX() - lastKnownSidebarX);
+                deltaY = (int) (this.getPreferredLocation().getY() - lastKnownSidebarY);
             }
         }
         else
