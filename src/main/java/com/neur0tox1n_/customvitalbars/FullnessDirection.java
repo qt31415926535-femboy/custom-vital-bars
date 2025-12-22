@@ -10,7 +10,9 @@ public enum FullnessDirection
     LEFT("Left"),
     RIGHT("Right"),
     TOP("Top"),
-    BOTTOM("Bottom");
+    BOTTOM("Bottom"),
+    MIDDLE_VERTICAL( "Middle-Vertical" ),
+    MIDDLE_HORIZONTAL( "Middle-Horizontal" );
 
     private final String name;
 
